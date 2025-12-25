@@ -21,13 +21,16 @@ print_help(){
 }
 
 jiazai_loader(){
-    nasm src/boot/loader.asm -o build/loader.bin
+    nasm -i gb2312 src/boot/loader.asm -o build/loader.bin
+    nasm -i gb2312 src/boot/kernel.asm -o build/kernel.bin
     scp disk_images/"${img}".img arch_root:~/win/os
     scp build/loader.bin arch_root:~/win/os
+    scp build/kernel.bin arch_root:~/win/os
     ssh arch_root << EOF
     mkdir -p ~/win/tmp_mount
     mount ~/win/os/"${img}".img ~/win/tmp_mount -t vfat -o loop
     cp ~/win/os/loader.bin  ~/win/tmp_mount
+    cp ~/win/os/kernel.bin  ~/win/tmp_mount
     sync
     umount ~/win/tmp_mount
     exit 
@@ -46,7 +49,7 @@ nasm_and_img(){
         img="$name"
     fi
 
-    nasm src/boot/"${name}".asm -o build/"${name}".bin
+    nasm -i gb2312 src/boot/"${name}".asm -o build/"${name}".bin
 
     if  $create_img  ; then
         dd if=/dev/zero of=disk_images/"${img}".img bs=512 count=720

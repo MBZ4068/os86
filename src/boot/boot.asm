@@ -322,11 +322,12 @@ Fat_Odd:
 
     
 startboot       db 0AH,0DH,"Start Boot",0
-filename        db "LOADER  BIN",0
+
+filename        db "KERNEL  BIN",0
 residue_sec_num db 0
 now_sec_ord     dw 0
 
-print_not_find  db 0AH,0DH,"Loader.bin Not Found!",0
+print_not_find  db 0AH,0DH,"KERNEL.bin Not Found!",0
 new_line        db 0AH,0DH,0
 error_code      db 0AH,0DH,0,0,0
 
