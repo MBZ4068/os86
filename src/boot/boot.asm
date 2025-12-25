@@ -161,22 +161,22 @@ Load_Loader:
 
     xor cx,cx
     mov cl,byte [BPB_SecPerClus]
-  
+.Read_Cluster_Loop:
+    push cx             ; 保存循环次数
+    push ax             ; 保存当前扇区号 LBA
+    mov cl, 1           ; 【强制】每次只读 1 个扇区！
     call Sector_Load_Memory
-
-    push bx
-    mov  ah, 0eh
-    mov  al, '.'
-    mov  bx, 000fh
-    int  10h
-    pop  bx        ;bx 后面要用 所以必须保护
-
-
-    xor ax,ax                ;添加偏移
-    mov al, byte [BPB_SecPerClus]
-    mul word [BPB_BytesPerSec]
-    add bx,ax
-    pop ax
+    
+    pop ax              ; 恢复当前扇区号
+    inc ax              ; 扇区号 + 1 (准备读下一个)
+    
+    ; 内存指针后移 512 字节
+    add bx, [BPB_BytesPerSec] 
+    
+    pop cx              ; 恢复循环次数
+    loop .Read_Cluster_Loop
+    ; ----------------------------------------------------------------
+    pop ax              ; 恢复 FAT 表索引
     call Get_Fatdata
     jmp Loader_Load_Memory
 Loader_over:
