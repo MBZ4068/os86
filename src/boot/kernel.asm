@@ -24,8 +24,8 @@ start:
     mov  word [ds:0x180], video_service
     mov  word [ds:0x182], cs            ;设置60中断
 
-    ; mov  word [ds:0x8*4],time_isr
-    ; mov  word [ds:0x8*4+2],cs
+    mov  word [ds:0x8*4],time_isr
+    mov  word [ds:0x8*4+2],cs
     
     sti
     pop ds
@@ -34,24 +34,22 @@ start:
     mov ax, 0006h
     int 10h
 
+    mov ax,0004h
+    int 60h
 
-    
-    mov ah,03h
+    mov ah, 08h
+    mov bx,"秋"
+    mov dx,0000h
+    mov cx,0
     int 60h
 
 
    
     jmp $
    
-Num_ASCII:
-   cmp AL, 9
-   jg  To_16
-   add AL, "0"
-   ret
-To_16:
-   ADD AL, 37H
-   ret
-time_isr:
+
+
+time_isr:           ;定时器中断
     xchg bx,bx
     push ax
     push ds
@@ -62,7 +60,7 @@ time_isr:
     inc word [cs:tick_count]
 
     mov ax,[cs:tick_count]
-    and al,0x0f
+    and al,0x07           ;间隔八个周期
     cmp al,0
     jz .refresh_cursor
     .time_end:
@@ -100,6 +98,7 @@ video_service: ;汉显
     pop  bx
     jmp  word [cs:function_num_list+si]
     
+    
 
 
 set_cursor_shape: ;00 设置光标形状
@@ -118,6 +117,7 @@ set_cursor_shape: ;00 设置光标形状
     mov byte [cs:active_cursor],al
     jmp hanxian_end
 
+    
 
 
 set_cursor_weizhi: ;01 设置光标位置 该坐标是显存坐标
@@ -129,10 +129,14 @@ get_cursor:        ;02 h获取光标信息
 show_cursor:       ;03 显示光标
 
     mov dx,  [cs:video_mem_cursor_coord]  ;在显存中的位置  （以8x8像素分割成80x25）
+
+
     cmp dx,  0xffff
-    jz hanxian_end
+    jnz .read_cursor
+    jmp hanxian_end
 
     .read_cursor:
+        
         ;DX 为坐标
         mov ax, 0xb800
         mov ds, ax
@@ -147,7 +151,7 @@ show_cursor:       ;03 显示光标
         shl  si, 1
         mov  si,word [cs:video_mem_rowlist+si]
         add  si, ax     
-        xor  bx,bx                  
+        xor bx,bx                  
         mov  bl,byte [cs:active_cursor]
         shl  bx,1
         shl  bx,1
@@ -186,6 +190,7 @@ show_cursor:       ;03 显示光标
         add di ,2
 
         ;绘制光标5，6行
+
         mov al,byte [ds:si]
         mov bh,al
         
@@ -211,69 +216,6 @@ show_cursor:       ;03 显示光标
         
         jmp hanxian_end
 
-
-        
-
-    
-
-read_typehead:     ;从显存中读取字模
-    ;dx 字模在显存中的坐标 80x25 dh 行 dl 列 以8x8字模为一行列
-    push ax
-    push ds
-    push es
-    push di
-    push si
-
-    mov ax, 0xb800
-    mov ds, ax
-    mov ax, cs
-    mov es, ax
-
-    xor  ax, ax
-    mov  al, dl
-    xchg dl, dh
-    xor  dh, dh
-    mov  si, dx
-    shl  si, 1
-    mov  si, [cs:video_mem_rowlist+si]
-    add  si, ax                        ;bx 现在是该坐标的显存偏移地址
-    mov  di, cache_typehead
-    mov  dx, 79
-    .read_to_cache_typehead:
-        ;读取字模1，2行
-        lodsb
-        stosb
-        mov al, byte [ds:si+0x1fff]
-        stosb
-        add si, dx
-
-        ;读取字模3，4行
-        lodsb
-        stosb
-        mov al, byte [ds:si+0x1fff]
-        stosb
-        add si, dx
-
-       ;读取字模5，6行
-        lodsb
-        stosb
-        mov al, byte [ds:si+0x1fff]
-        stosb
-        add si, dx
-
-       ;读取字模7，8行
-        lodsb
-        stosb
-        mov al, byte [ds:si+0x1fff]
-        stosb
-    
-        pop si
-        pop di
-        pop es
-        pop ds
-        pop ax
-        ret
-        
 
 set_artive_page: ;04 设置活动页
 redraw:          ;05 刷新屏幕   
@@ -422,7 +364,7 @@ cache_typehead         db 0,0,0,0,0,0,0,0
 ;06 空方块
 ;07 |
 ;08 <
-cursor_typehead        dw 0x0000, 0x0000, 0x0000, 0xFE00
+cursor_typehead:        dw 0x0000, 0x0000, 0x0000, 0xFE00
                        dw 0x0000, 0x0000, 0x00fe, 0xFE00
                        dw 0x0000, 0x0000, 0xfe00, 0xFE00
                        dw 0x0000, 0x00fe, 0xfefe, 0xFE00
@@ -443,7 +385,7 @@ zone_list: ;区码的计算表
     dw 7144,7238,7332,7426,7520,7614,7708,7802,7896,7990,8084,8178,8272,8366,8460
     dw 8554,8648,8742                                                             ; 只要到这里就够了，一共 94 个区
 
-video_mem_rowlist dw 0,320,640,960,1280,1600 ;显存的以8行像素为一行的行偏移表
+video_mem_rowlist: dw 0,320,640,960,1280,1600 ;显存的以8行像素为一行的行偏移表
                dw 1920,2240,2560,2880,3200
                dw 3520,3840,4160,4480,4800
                dw 5120,5440,5760,6080,6400
@@ -462,8 +404,6 @@ function_num_list: ;此中断的快速跳转功能的表
                 dw to_cache          ;09 写到缓存
                 dw tty               ;0a 电传模式
 
-
-cursor_list dw 0xA6F0, 0xa6f1, 0xa6f2 , 0xa6f3 , 0xa6f4 , 0xa6f5 , 0xa6f6 , 0xa6f7 , 0xa6f8 , 0xA6F9
 ;60h中断结束=============
 
 print_str   dw "“    糟得很”和“好得很”    "
