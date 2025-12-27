@@ -150,6 +150,15 @@ Load_Loader:
     jae Loader_over
     push ax
 
+    push ax
+    push bx
+    mov al,'.'
+    mov ah,0eh
+    mov bx,000fh
+    int 10h
+    pop bx
+    pop ax
+
     xor cx,cx   
     sub  ax, 2
     mov  cl,byte [BPB_SecPerClus]

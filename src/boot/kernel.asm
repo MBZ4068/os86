@@ -6,7 +6,7 @@
 zimo_dizhi   equ 0xc000
 ascii_pianyi equ 0xfa6e
 jmp short start
-
+tick_count dw 0
 
 
 start:
@@ -23,120 +23,26 @@ start:
     mov  ds,              ax
     mov  word [ds:0x180], video_service
     mov  word [ds:0x182], cs            ;设置60中断
+
+    ; mov  word [ds:0x8*4],time_isr
+    ; mov  word [ds:0x8*4+2],cs
     
     sti
     pop ds
         ; 1. 设置 CGA Mode 06h
     ; ------------------------------------------------
     mov ax, 0006h
-
     int 10h
-    ;int 60中断h
-    ;ah=07h
-    ;bx 需要打印的字符串 两字节 可以为gb2312汉字
-    ;dx 行列 dh行，dl列
-    ;cl 是否反色
+
+
     
- 
-    MOV AH, 07H
+    mov ah,03h
+    int 60h
+
+
    
-    mov al, 0
-    mov cl,0
-    xchg bx, bx
-    mov si, print_str
-    
-print_hang:
-    
-    mov ch, 0
-    cmp al, 25
-    jz  print_end
-print_lie:
-    
-    cmp  ch, 80
-    jz   print_hang_add
-    
-    mov dh, al
-    mov dl, ch
-
-    push ax
-    lodsb
-
-    mov bl, al
-    lodsb
-    mov bh, al
-  
-    pop ax
-
-    
-    
-    int 60h
-    inc CH
-    jmp print_lie
-print_hang_add:
-    inc al
-    jmp print_hang
-print_end:
-    xchg bx, bx
-    mov ax,print_str
-    mov  dx, 0x1844
-    call Error_Manage
-
-    mov  ax, print_str
-    mov  ah, al
-    mov  dx, 0x1847
-    call Error_Manage
-
-    mov  ax, si 
-    mov  dx, 0x184b
-    call Error_Manage
-
-    mov  ax, si
-    mov  ah, al
-    mov  dx, 0x184e
-    call Error_Manage
-    jmp  $
-
-
-
-Error_Manage:
-
-
-    push cx
-    push bx
-    push si
+    jmp $
    
-    mov  al, ah
-    and  al, 00001111b
-    call Num_ASCII
-    push ax
-    xor bx,bx
-    mov bl, al
-    mov ah, 07h
-    mov cl, 0
-    int 60h
-    pop ax
-    
-    mov  al, ah
-    and  al, 11110000b
-    mov  cl, 4
-    shr  al, cl
-    call Num_ASCII
-
-    push ax
-     xor bx,bx
-    mov bl, al
-    mov ah, 07h
-    dec dl
-    mov cl, 0
-    int 60h
-    pop ax
-    
-    pop si
-    pop bx
-    pop cx
-    ret
-
-
 Num_ASCII:
    cmp AL, 9
    jg  To_16
@@ -145,6 +51,32 @@ Num_ASCII:
 To_16:
    ADD AL, 37H
    ret
+time_isr:
+    xchg bx,bx
+    push ax
+    push ds
+
+    mov ax, cs
+    mov ds, ax
+
+    inc word [cs:tick_count]
+
+    mov ax,[cs:tick_count]
+    and al,0x0f
+    cmp al,0
+    jz .refresh_cursor
+    .time_end:
+        mov al, 0x20
+        out 0x20, al
+        pop ds
+        pop ax
+        iret
+
+    .refresh_cursor:
+        mov ax,0300h
+        int 60h
+        jmp .time_end
+
 
     
 
@@ -158,44 +90,201 @@ video_service: ;汉显
     push dx
     push cx
 
+    ;功能号判断
+    cld
     push bx
     mov  bl, ah
     xor  bh, bh
     shl  bx, 1
-    jmp  word [cs:function_num_list+bx]
+    mov  si, bx
+    pop  bx
+    jmp  word [cs:function_num_list+si]
     
 
 
-set_cursor_shape: ;01 设置光标形状
+set_cursor_shape: ;00 设置光标形状
     ;AL 选择光标形状
-    xor ah,                        ah
-    shl ax,                        1
-    mov bx,                        ax
-    mov ax,                        word [cs:cursor_list+bx]
-    mov word [active_cursor_list], ax
-    jmp hanxian_end
-;A6F0 _
-;a6f1 厚的_
-;a6f2 =
-;a6f3 4x4方块
-;a6f4 8x8
-;a6f5 虚方块
-;a6f6 |
-;a6f7 I
-;a6f8 Y
-;A6F9 <
-
-set_cursor_weizhi: ;02 设置光标位置
+    ;光标字模：
+    ;00 _
+    ;01 厚的_
+    ;02 =
+    ;03 4x4方块
+    ;04 实方块
+    ;05 虚方块
+    ;06 空方块
+    ;07 |
+    ;08 <
     
-get_cursor:        ;03 获取光标信息
-set_artive_page:   ;04 设置活动页
-redraw:            ;05 刷新屏幕   
-up_roll:           ;06 往上滚动屏幕
-down_roll:         ;07 往下滚动屏幕
+    mov byte [cs:active_cursor],al
+    jmp hanxian_end
 
-draw_word:
 
-    pop bx
+
+set_cursor_weizhi: ;01 设置光标位置 该坐标是显存坐标
+    ;dx 位置
+    mov word [video_mem_cursor_coord],dx
+    jmp hanxian_end
+
+get_cursor:        ;02 h获取光标信息
+show_cursor:       ;03 显示光标
+
+    mov dx,  [cs:video_mem_cursor_coord]  ;在显存中的位置  （以8x8像素分割成80x25）
+    cmp dx,  0xffff
+    jz hanxian_end
+
+    .read_cursor:
+        ;DX 为坐标
+        mov ax, 0xb800
+        mov ds, ax
+        mov ax, cs
+        mov es, ax
+
+        xor  ax, ax
+        mov  al, dl
+        xchg dl, dh
+        xor  dh, dh
+        mov  si, dx
+        shl  si, 1
+        mov  si,word [cs:video_mem_rowlist+si]
+        add  si, ax     
+        xor  bx,bx                  
+        mov  bl,byte [cs:active_cursor]
+        shl  bx,1
+        shl  bx,1
+        shl  bx,1
+        add  bx, cursor_typehead
+        mov  di,  bx
+
+        mov  dx, 80
+
+    .read_to_cursor_typehead:
+        ;绘制光标1，2行
+        
+        mov al,byte [ds:si]
+        mov bh,al
+        mov al,byte [ds:si+0x2000]
+        mov bl,al
+        
+        xor bx, word [es:di]
+        mov byte [ds:si],bh
+        mov byte [ds:si+0x2000],bl
+
+        add si ,dx
+        add di ,2
+
+        ;绘制光标3，4行
+        mov al,byte [ds:si]
+        mov bh,al
+        mov al,byte [ds:si+0x2000]
+        mov bl,al
+        
+        xor bx, word [es:di]
+        mov byte [ds:si],bh
+        mov byte [ds:si+0x2000],bl
+
+        add si ,dx
+        add di ,2
+
+        ;绘制光标5，6行
+        mov al,byte [ds:si]
+        mov bh,al
+        
+        mov al,byte [ds:si+0x2000]
+        mov bl,al
+        
+        xor bx, word [es:di]
+        mov byte [ds:si],bh
+        mov byte [ds:si+0x2000],bl
+
+        add si ,dx
+        add di ,2
+
+        ;绘制光标7，8行
+        
+        mov al,byte [ds:si]
+        mov bh,al
+        mov al,byte [ds:si+0x2000]
+        mov bl,al
+        xor bx, word [es:di]
+        mov byte [ds:si],bh
+        mov byte [ds:si+0x2000],bl
+        
+        jmp hanxian_end
+
+
+        
+
+    
+
+read_typehead:     ;从显存中读取字模
+    ;dx 字模在显存中的坐标 80x25 dh 行 dl 列 以8x8字模为一行列
+    push ax
+    push ds
+    push es
+    push di
+    push si
+
+    mov ax, 0xb800
+    mov ds, ax
+    mov ax, cs
+    mov es, ax
+
+    xor  ax, ax
+    mov  al, dl
+    xchg dl, dh
+    xor  dh, dh
+    mov  si, dx
+    shl  si, 1
+    mov  si, [cs:video_mem_rowlist+si]
+    add  si, ax                        ;bx 现在是该坐标的显存偏移地址
+    mov  di, cache_typehead
+    mov  dx, 79
+    .read_to_cache_typehead:
+        ;读取字模1，2行
+        lodsb
+        stosb
+        mov al, byte [ds:si+0x1fff]
+        stosb
+        add si, dx
+
+        ;读取字模3，4行
+        lodsb
+        stosb
+        mov al, byte [ds:si+0x1fff]
+        stosb
+        add si, dx
+
+       ;读取字模5，6行
+        lodsb
+        stosb
+        mov al, byte [ds:si+0x1fff]
+        stosb
+        add si, dx
+
+       ;读取字模7，8行
+        lodsb
+        stosb
+        mov al, byte [ds:si+0x1fff]
+        stosb
+    
+        pop si
+        pop di
+        pop es
+        pop ds
+        pop ax
+        ret
+        
+
+set_artive_page: ;04 设置活动页
+redraw:          ;05 刷新屏幕   
+up_roll:         ;06 往上滚动屏幕
+down_roll:       ;07 往下滚动屏幕
+
+draw_word:       ;08 写一个word到显存
+    ;bx,字符
+    ;cx,反色
+    ;dx,坐标 
+    xchg bx,bx
     xor di, di
     
     ; --- 1. 计算屏幕地址 (ES:DI) ---
@@ -206,9 +295,9 @@ draw_word:
     mov di, [cs:video_mem_rowlist+di]
   
     ;列
-    xor  ax, ax
-    mov  al, dl
-    add  di, ax              ; DI Ready
+    xor ax, ax
+    mov al, dl
+    add di, ax ; DI Ready
 
     ; --- 2. 判断 ASCII 还是 汉字 ---
     cmp  bl, 80h
@@ -231,8 +320,8 @@ draw_word:
     ; 读取基准值
     ; 关键修正：必须使用 CS: 前缀，因为是在中断里，表在代码段
     ; 关键修正：直接覆盖 SI，不要用 add si (因为 si 初始值是脏的)
-    mov si, [cs:zone_biao+si]
-    ; 加上位索引
+    mov si, [cs:zone_list+si]
+    ; 加上位索引        
     add si, dx
     
     ; 乘以 8 (字模大小)
@@ -261,7 +350,7 @@ draw_word:
         xor bx, bx
         mov dx, 79     ; 优化：循环中使用寄存器加法
         
-        cmp cl, 0
+        cmp cl, 0           ;cl是是否反色的参数
         jz  .draw_loop_pair
         mov bx, 0xffff
     .draw_loop_pair:
@@ -298,9 +387,9 @@ draw_word:
         mov byte [es:di+0x1fff], al
         jmp hanxian_end
 
-word_to_cache: ;09 写一个字到缓存
+to_cache: ;09 写一个字到缓存
 
-tty:           ;0a 电传模式 
+tty:      ;0a 电传模式 
 
 hanxian_end:
     pop cx
@@ -311,15 +400,41 @@ hanxian_end:
     pop si
     pop es
     pop ds
+    
     iret
 
-video_modlist      db 0x1a,0x0a ;为了显示模式的可扩展性
-active_videomod    db 0eh
-active_cursor_list dw 0xa6f1    ;当前使用在光标表
+video_modlist          db 0x1a,0x0a                    ;为了显示模式的可扩展性
+active_videomod        db 0eh
+active_page            db 0                            ;记录当前活动缓存页
+page_offset            db 0                            ;记录缓存页偏移行
+
+active_cursor          db 0                       ;当前使用在光标
+cache_cursor_coord     dw 0                            ;记录光标所在的缓存页为基础的坐标
+video_mem_cursor_coord dw 0                            ;记录光标在显存中的坐标 （以汉显模式布局的）
+cache_typehead         db 0,0,0,0,0,0,0,0
+;光标字模：
+;00 _
+;01 厚的_
+;02 =
+;03 4x4方块
+;04 实方块
+;05 虚方块
+;06 空方块
+;07 |
+;08 <
+cursor_typehead        dw 0x0000, 0x0000, 0x0000, 0xFE00
+                       dw 0x0000, 0x0000, 0x00fe, 0xFE00
+                       dw 0x0000, 0x0000, 0xfe00, 0xFE00
+                       dw 0x0000, 0x00fe, 0xfefe, 0xFE00
+                       dw 0xfefe, 0xfefe, 0xfefe, 0xFE00
+                       dw 0xfe82, 0x8282, 0x8282, 0xfe00
+                       dw 0xaa54, 0xaa54, 0xaa54, 0xaa00
+                       dw 0x8080, 0x8080, 0x8080, 0x8000
+                       dw 0x1e3e, 0x7efe, 0x7e3e, 0x1e00
 ; -----------------------------------------------------------
 ; 预计算的乘法表: Index * 94
 ; -----------------------------------------------------------
-zone_biao: ;区码的计算表
+zone_list: ;区码的计算表
     dw 0,94,188,282,376,470,564,658,752,846,940,1034,1128,1222,1316,1410
     dw 1504,1598,1692,1786,1880,1974,2068,2162,2256,2350,2444,2538,2632,2726,2820
     dw 2914,3008,3102,3196,3290,3384,3478,3572,3666,3760,3854,3948,4042,4136,4230
@@ -344,7 +459,7 @@ function_num_list: ;此中断的快速跳转功能的表
                 dw up_roll           ;06 往上滚动屏幕
                 dw down_roll         ;07 往下滚动屏幕
                 dw draw_word         ;08 在显存绘制单个字
-                dw to_cache     ;09 写一个字到缓存
+                dw to_cache          ;09 写到缓存
                 dw tty               ;0a 电传模式
 
 
