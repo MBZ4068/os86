@@ -2,10 +2,8 @@
 [BITS 16]
 [ORG 0x10000]
 
-
-zimo_dizhi   equ 0xc000
-ascii_pianyi equ 0xfa6e
 jmp short start
+
 tick_count dw 0
 
 
@@ -37,15 +35,112 @@ start:
     mov ax,0004h
     int 60h
 
-    mov ah, 08h
-    mov bx,"秋"
-    mov dx,0000h
-    mov cx,0
-    int 60h
-
-
+        MOV AH, 08H
    
+    mov  al, 0
+    mov  cl, 0
+    xchg bx, bx
+    mov  si, print_str
+    
+print_hang:
+    
+    mov ch, 0
+    cmp al, 25
+    jz  print_end
+print_lie:
+    
+    cmp ch, 80
+    jz  print_hang_add
+    
+    mov dh, al
+    mov dl, ch
+
+    push ax
+    lodsb
+
+    mov bl, al
+    lodsb
+    mov bh, al
+  
+    pop ax
+
+    
+    
+    int 60h
+    inc CH
+    jmp print_lie
+print_hang_add:
+    inc al
+    jmp print_hang
+print_end:
+    xchg bx, bx
+    mov  ax, print_str
+    mov  dx, 0x1844
+    call Error_Manage
+
+    mov  ax, print_str
+    mov  ah, al
+    mov  dx, 0x1847
+    call Error_Manage
+
+    mov  ax, si
+    mov  dx, 0x184b
+    call Error_Manage
+
+    mov  ax, si
+    mov  ah, al
+    mov  dx, 0x184e
+    call Error_Manage
     jmp $
+
+Error_Manage:
+
+
+    push cx
+    push bx
+    push si
+   
+    mov  al, ah
+    and  al, 00001111b
+    call Num_ASCII
+    push ax
+    xor  bx, bx
+    mov  bl, al
+    mov  ah, 07h
+    mov  cl, 0
+    int  60h
+    pop  ax
+    
+    mov  al, ah
+    and  al, 11110000b
+    mov  cl, 4
+    shr  al, cl
+    call Num_ASCII
+
+    push ax
+     xor bx, bx
+    mov bl, al
+    mov ah, 07h
+    dec dl
+    mov cl, 0
+    int 60h
+    pop ax
+    
+    pop si
+    pop bx
+    pop cx
+    ret
+
+Num_ASCII:
+   cmp AL, 9
+   jg  To_16
+   add AL, "0"
+   ret
+To_16:
+   ADD AL, 37H
+   ret
+   
+  
    
 
 
@@ -218,7 +313,7 @@ show_cursor:       ;03 显示光标
 
 
 set_artive_page: ;04 设置活动页
-redraw:          ;05 刷新屏幕   
+redraw:          ;05 刷新屏幕  
 up_roll:         ;06 往上滚动屏幕
 down_roll:       ;07 往下滚动屏幕
 
@@ -271,7 +366,7 @@ draw_word:       ;08 写一个word到显存
     shl si, 1
     shl si, 1
     ; 设置字库段
-    mov ax, 0xc000
+    mov ax, 0xd000
     mov ds, ax
     
     jmp .shezhi_xiancun_jizhi
@@ -329,7 +424,7 @@ draw_word:       ;08 写一个word到显存
         mov byte [es:di+0x1fff], al
         jmp hanxian_end
 
-to_cache: ;09 写一个字到缓存
+to_cache: ;09 写到缓存
 
 tty:      ;0a 电传模式 
 
