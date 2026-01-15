@@ -1,9 +1,35 @@
 [BITS 16]
-[ORG 0x10000]
+[ORG 0xa000]
+%include "sys_mmc.inc"
+;kernel_setoff 内核加载偏移地址
+;han_setoff 汉显缓存区偏移地址
+;irq_setoff 中断加载偏移地址   
+;sysbuf_setoff 系统缓存区偏移地址
+
+;各模块栈顶与栈底地址定义
+;kernel_stack_top 内核栈顶
+;kernel_stack_bottom 内核栈底
+;clock_stack_top 时钟栈顶
+;clock_stack_bottom 时钟栈底
+;keyboard_stack_top 键盘栈顶
+;keyboard_stack_bottom 键盘栈底
+;disk_stack_top 磁盘栈顶
+;disk_stack_bottom 磁盘栈底
+;video_stack_top 视频栈顶
+;video_stack_bottom 视频栈底
+;otherirq_stack_top 其他中断栈顶
+;otherirq_stack_bottom 其他中断栈底
+;app_stack_top 应用程序栈顶
+;app_stack_bottom 应用程序栈底
+
 zimo_dizhi   equ 0xd000
 ascii_pianyi equ 0xfa6e
 
+
 video_service: ;汉显
+    mov [cs:save_sp],sp
+    mov sp,video_stack_bottom
+
     push ds
     push es
     push si
@@ -208,7 +234,7 @@ draw_word:       ;08 写一个word到显存
         shl bx, 1
         shl bx, 1
         shl bx, 1
-        mov si, 0xFA6E
+        mov si, 0xFA6E     ;ascii码字模所在的位置    
         add si, bx
         
     .shezhi_xiancun_jizhi:
@@ -267,9 +293,14 @@ hanxian_end:
     pop si
     pop es
     pop ds
-    
-    iret
 
+    cli
+    mov sp, [cs:save_sp]
+    sti
+
+    iret
+    
+save_sp  dw 0x0000
 video_modlist          db 0x1a,0x0a                    ;为了显示模式的可扩展性
 active_videomod        db 0eh
 active_page            db 0                            ;记录当前活动缓存页

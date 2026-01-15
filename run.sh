@@ -1,4 +1,5 @@
 #!/bin/bash
+@echo off
 name=""
 img=""
 dbg=""
@@ -7,8 +8,8 @@ bochs_flag=true
 create_img=true
 #loader_flag=false
 gui_flag=false
-floppy_size="360"
-floppy_count=720
+floppy_size="1.44"
+floppy_count=2880
 nasm_fat_arg="-DISK_360K"
 
 print_help(){
@@ -20,10 +21,11 @@ print_help(){
     echo "  -h            显示帮助信息并退出。"
     echo "  -n            不启动 Bochs，仅编译汇编文件并生成镜像。"
     echo "  -g            启动 bochs 的 debug-gui(在启动之前需要先启动-d)"
-    echo "  -f <软盘大小>  指定软盘大小，支持1.44、1.2、720、360（单位：KB），默认360KB。"
+    echo "  -f <软盘大小>  指定软盘大小，支持1.44、1.2、720、360（单位：KB），默认1.44M。"
 }
 
 jiazai_loader(){
+
     ssh arch_root << EOF
     rm -f ~/win/os/*
     exit
@@ -57,6 +59,7 @@ name_proc(){
 }
 
 nasm_and_img(){
+    rm build/*
     if [[ "$floppy_size" == "1.44" ]]; then
         floppy_count=2880
         nasm_fat_arg="-DDISK_1.44M"
@@ -77,13 +80,13 @@ nasm_and_img(){
 
     for file in src/kernel/*.asm; do
         file_name=$(basename "$file" .asm)
-        nasm -i gb2312 "$file" $nasm_fat_arg -o build/"$file_name".bin
+        nasm -i gb2312 "$file" $nasm_fat_arg -o build/"$file_name".bin -I src/boot -I src/kernel
 
     done
 
-    nasm -i gb2312 src/boot/"${name}".asm $nasm_fat_arg -o build/"${name}".bin
-    nasm -i gb2312 src/boot/loader.asm $nasm_fat_arg -o build/loader.bin
-
+    nasm -i gb2312 src/boot/"${name}".asm $nasm_fat_arg -o build/"${name}".bin -I src/boot -I src/kernel
+    nasm -i gb2312 src/boot/loader.asm $nasm_fat_arg -o build/loader.bin -I src/boot -I src/kernel
+    echo "当前 "${nasm_fat_arg}""
     if  $create_img  ; then
         dd if=/dev/zero of=disk_images/"${img}".img bs=512 count=$floppy_count
         echo "创建软盘镜像: "${img}".img "
