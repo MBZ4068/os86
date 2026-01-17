@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "编译os86", // ① 这是任务的名字，后面绑定快捷键时要用
+      "type": "shell",        // ② 在shell/终端中执行命令
+      "command": "bash",    // ③ 要调用的主命令，也可以是 `make`, `gcc`, `npm`, 或 `./build.sh` 等
+      "args": [               // ④ 传递给命令的参数
+        "D:/os86/run.sh", // 假设你的编译脚本是项目下的一个Python脚本
+		"-d"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true     // ⑤ 设为默认构建任务后，可用 Ctrl+Shift+B 直接运行
+      },
+      "presentation": {
+        "reveal": "always",   // 运行任务时自动显示终端面板
+        "clear": true,        // 每次运行前清空之前输出
+        "echo": false         // 不显示执行的命令本身，让输出更干净
+      },
+      "problemMatcher": []    // 可选：用于解析编译器错误，点击错误可跳转到代码行
+    }
+  ]
+}
