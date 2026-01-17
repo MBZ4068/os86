@@ -16,16 +16,14 @@ org 0x10000
 ;video_stack_bottom 视频栈底
 ;otherirq_stack_bottom 其他中断栈底
 ;app_stack_bottom 应用程序栈底
-jmp loader_start
-
-loader_bottom       equ 0x1000
-loader_start_top    equ 0xf7ff
-loader_start_bottom equ 0xffff
+jmp short loader_start
+nop
 
 %include "fat12.inc"
-timer_setoff        dw  irq_setoff
-video_setoff        dw  0
-test_setoff         dw  0
+
+timer_setoff dw irq_setoff
+video_setoff dw 0
+test_setoff  dw 0
 
 loader_start:
     
@@ -52,25 +50,85 @@ loader_start:
     mov dl, 0
     int 13h
 
-;加载哨兵位
-call set_magicnum
+
 ;加载fat表项
 call load_fat
 
-mov  si, videoname
-call Find_file
+;=========  加载中断程序到内存
+; 时钟中断
+mov  si,                timername
+xor  ax,                ax
+mov  bx,                [timer_setoff]
+call find_and_loader
+
+;视频中断
+add  bx,                2
+mov  [video_setoff],  ax
+mov  si,                videoname
+xor  ax,                ax
+call find_and_loader
+
+;测试中断
+
+add  bx,                2
+mov  [test_setoff],     ax
+mov  si,                testname
+xor  ax,                ax
+call find_and_loader
+xchg bx,bx
+
+
+;=======加载哨兵位
+call set_magicnum
+
+
+;安装中断
+push ds
+cli 
+xor  ax,                ax
+mov  ds,                ax
+mov  ax,                [video_setoff]
+mov  word [ds:0x180],   ax
+mov  word [ds:0x182],   cs             ;设置60中断
+mov  ax,                [timer_setoff]
+mov  word [ds:0x8*4],   ax             ;时钟中断
+mov  word [ds:0x8*4+2], cs
+
+sti
+pop  ds
+xchg bx,bx
+
 
 jmp  $
 
 ;=============查找并加载文件
+;因为是中断文件，所以不会有超过64kb的情况，不用考虑es
+;参数：
 ;si 文件名地址
-;es:bx 文件加载位置
-;ax 下一个文件该加载的内存地址的变量位置
-
+;ax:bx 文件加载位置
+;出口参数：
+;bx 下一个文件该加载的内存地址的变量位置
 
 find_and_loader:
+    push es
+    mov  es, ax
+    call Find_file
+    push si
 
-    jmp $
+    ;有返回值 ; ax 文件起始簇号 cx,dx, 文件大小字节
+    call Load_file
+
+    mov  si, print_load
+    call TTY_Print
+    pop  si
+    push si
+    call TTY_Print
+    pop  si
+    
+    pop es
+    ret
+
+   
 ;加载哨兵内存布局的哨兵位
 ;魔数位 a55a
 ;kernel_setoff 内核加载偏移地址
@@ -92,12 +150,12 @@ set_magicnum:
     push ax
     push ds
 
-    xor ax, ax
-    mov ds, ax
-    mov ax, word [magic_num]
+    xor  ax,                    ax
+    mov  ds,                    ax
+    mov  ax,                    word [magic_num]
     
-    mov [kernel_stack_top],    ax ; fat表项底
-    mov [kernel_stack_bottom], ax ; 内核栈底
+    mov  [kernel_stack_top],    ax               ; fat表项底
+    mov  [kernel_stack_bottom], ax               ; 内核栈底
 
     mov [clock_stack_bottom],    ax ; 时钟栈底
     mov [keyboard_stack_bottom], ax ; 键盘栈底
@@ -111,6 +169,11 @@ set_magicnum:
     mov [irq_setoff-2],    ax ; 中断加载偏移地址   
     mov [sysbuf_setoff-2], ax ; 系统缓存区偏移地址
 
+    ;中断文件是在loader文件中才确定内存地址的
+    mov [timer_setoff-2], ax
+    mov [video_setoff-2], ax
+    mov [test_setoff-2],  ax
+
     
     pop ds
     pop ax
@@ -123,6 +186,9 @@ load_fat:
     push ax
     push bx
     push cx
+
+    mov  si, print_loadfat
+    call TTY_Print
 
     mov ax, 0
     mov es, ax
@@ -158,15 +224,21 @@ load_fat:
         pop es
         ret
 
-TTY_Print:
+TTY_Print:   
+    push ax
+    push bx
+    .tty_loop:
     lodsb
     or  al, al
     jz  .TTY_END
     mov bx, 0007h
     mov ah, 0eh
     int 10h
-    jmp TTY_Print
+    jmp .tty_loop
     .TTY_END:
+        pop bx
+        pop ax
+
         ret
     
 ;===============写入扇区到内存
@@ -208,11 +280,12 @@ Sector_Load_Memory:
     
     .Load_start:
         
-        mov ah, 02h
-        mov al, [bp-2]
+        mov  ah, 02h
+        mov  al, [bp-2]
         
-        int 13h
-        jc  Error_Manage ; 如果需要打印错误代码则改为跳转到Error_Manage
+        int  13h
+        
+        jc   Error_Manage ; 如果需要打印错误代码则改为跳转到Error_Manage
     .Load_success:
         mov sp, bp
         pop ax
@@ -281,9 +354,10 @@ Find_file:
     push si
     push di
     push ds
-  
-    mov byte [residue_sec_num], RootDirSectors          ;剩余扇区数
-    mov word [now_sec_ord],     SectorNumOfRootDirStart ;现在扇区数
+    
+    push bx
+    mov  byte [residue_sec_num], RootDirSectors          ;剩余扇区数
+    mov  word [now_sec_ord],     SectorNumOfRootDirStart ;现在扇区数
 
     .find_loop:                  
         cmp  byte [residue_sec_num], 0
@@ -330,12 +404,14 @@ Find_file:
         call TTY_Print
         xor  ax, ax
         mov  es, ax
+        
         and  di, 0xffe0            ;对齐32字节 回到目录项开头
         mov  ax, word [es:di+0x1A] ;文件起始簇号偏移
-        mov  cx, word [es:di+0x1c] ; 文件大小高位
-        mov  dx, word [es:di+0x1e] ; 文件大小低位
-        xchg bx, bx
-        jmp  .find_ret
+        mov  cx, word [es:di+0x1e] ; 文件大小高位
+        mov  dx, word [es:di+0x1c] ; 文件大小低位
+        
+       
+        jmp .find_ret
 
     .Next_Dir:
         and di, 0xffe0
@@ -357,14 +433,15 @@ Find_file:
         call TTY_Print
 
     .find_ret:
+        pop bx
         pop ds
-        pop si
         pop di
+        pop si
         pop es
         ret 
 
 
-;读取再内存中的 簇号对应的fat项 
+;读取在内存中的fat表 簇号对应的fat项 
 ;参数 
 ;ax 簇
 ;出口参数
@@ -373,6 +450,7 @@ Clus_to_fat:
         push es
         push bx
         push dx
+        
         xor  cx, cx
         mov  es, cx
         mov  bx, 3
@@ -381,14 +459,19 @@ Clus_to_fat:
         div  bx     ;ax：商 簇在fat表的字节地址， dx: 余数 余1是奇数
         
     .Fat_Load_Memory:
-        add  bx, fat_setoff
+        
+        mov  bx, fat_setoff
+        add  bx, ax
+        
         mov  ax, word [es:bx]
         test dx, dx
         jz   .Fat_Odd
         mov  cl, 4
         shr  ax, cl
     .Fat_Odd:
+        
         and ax, 0fffh
+        
         pop dx
         pop bx
         pop es
@@ -411,13 +494,13 @@ Load_file:
     push bx
     push cx
     push dx
-
-
-
+    
     .Loader_Load_Memory:
+        
         cmp  ax, 0ff8h
+        
         jae  .Loader_over
-        push ax
+        push ax  
 
         push ax
         push bx
@@ -427,7 +510,7 @@ Load_file:
         int  10h
         pop  bx
         pop  ax
-
+        
         xor cx, cx
         sub ax, 2
         mov cl, byte [BPB_SecPerClus]
@@ -439,12 +522,13 @@ Load_file:
 
         xor cx, cx
         mov cl, byte [BPB_SecPerClus]
+        
     .Read_Cluster_Loop:
         push cx                 ; 保存循环次数
         push ax                 ; 保存当前扇区号 LBA
         mov  cl, 1              ; 【强制】每次只读 1 个扇区！
-        call Sector_Load_Memory
         
+        call Sector_Load_Memory
         pop ax ; 恢复当前扇区号
          ; --- 准备下一个扇区 ---
         inc ax                    ; 下一个 LBA (注意这里也要处理进位到 DX)
@@ -462,10 +546,13 @@ Load_file:
     .no_segment_change:
         
         pop  cx                  ; 恢复计数
+        
         loop .Read_Cluster_Loop
+        
         ; --- 一个簇读完了，查 FAT 表找下一个簇 ---
-        pop  ax                  ; 弹出之前保存的当前簇号
+        pop ax                  ; 弹出之前保存的当前簇号
         call Clus_to_fat         ; 查表：输入 AX(当前簇)，返回 AX(下一个簇)
+        
         jmp  .Loader_Load_Memory
 
     .Loader_over:
@@ -500,10 +587,12 @@ magic_num         dw 0xa55a
 startloader_str   db 0AH,0DH,"Start loader",0
 videoname         db "VIDEO   BIN",0
 timername         db "TIMER   BIN",0
-trstname          db "TEST    BIN",0
+testname          db "TEST    BIN",0
 residue_sec_num   db 0
 now_sec_ord       dw 0
 cata_stack_bottom dw 0
 print_not_find    db 0AH,0DH,"Not Found ",0
 error_code        db 0AH,0DH,"  ",0
 print_find        db 0AH,0DH,"Found ",0
+print_loadfat     db 0ah,0dh,"Loading the fat table to 0x500",0
+print_load        db 0ah,0dh,"Loading the ",0

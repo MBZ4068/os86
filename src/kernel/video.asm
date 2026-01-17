@@ -1,5 +1,5 @@
 [BITS 16]
-[ORG 0xa000]
+
 %include "sys_mmc.inc"
 ;kernel_setoff 内核加载偏移地址
 ;han_setoff 汉显缓存区偏移地址

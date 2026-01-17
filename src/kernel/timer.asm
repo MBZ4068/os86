@@ -1,7 +1,10 @@
 [BITS 16]
 
+%include "sys_mmc.inc"
 
 time_isr:           ;定时器中断
+    mov [cs:save_sp],sp
+    mov sp,clock_stack_bottom
     push ax
     push ds
 
@@ -27,3 +30,4 @@ time_isr:           ;定时器中断
         jmp .time_end
 
 tick_count dw 0
+save_sp  dw 0x0000
