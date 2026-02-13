@@ -1,0 +1,1145 @@
+# 现在你可以在路径名周围使用双引号，以防路径名包含空格。
+
+#=======================================================================
+# PLUGIN_CTRL:
+# 控制可选设备插件的存在。这些插件直接通过此选项加载，
+# 其中一些插件会安装一个仅在加载插件设备时可用的配置选项。
+# 值 "1" 表示加载插件，"0" 将卸载它（如果之前已加载）。
+#plugin_ctrl
+# 默认情况下会加载这些插件（如果存在）：'biosdev', 'extfpuirq',
+# 'gameport', 'iodebug','parallel', 'serial', 'speaker' 和 'unmapped'。
+#
+# 这些插件也受支持，但它们通常直接通过其 bochsrc 选项加载：
+# 'e1000', 'es1370', 'ne2k', 'pcidev', 'pcipnic', 'sb16',
+# 'usb_ehci', 'usb_ohci', 'usb_uhci', 'usb_xhci' 和 'voodoo'。
+#=======================================================================
+#plugin_ctrl: unmapped=0, e1000=1 # 卸载 'unmapped' 并加载 'e1000'
+
+#=======================================================================
+# CONFIG_INTERFACE
+#
+# 配置界面是一系列菜单或对话框，允许你更改控制 Bochs 行为的所有设置。
+# 根据平台不同，最多有 3 种配置界面选择：一个称为 "textconfig" 的文本模式版本
+# 和两个图形版本 "win32config" 和 "wx"。文本模式版本使用 stdin/stdout 或
+# gui 控制台（如果可用 / 运行时配置），并且总是被编译进去，除非 Bochs 仅编译为 wx。
+# 选择 "win32config" 仅在 win32/win64 上可用，并且是这些平台上的默认值。
+# 选择 "wx" 仅在 Bochs 编译时带有 wxWidgets 支持时可用。
+# 如果你不写 config_interface 行，Bochs 将为你选择一个默认值。
+#
+# 注意：如果你使用 "wx" 配置界面，你也必须使用 "wx" 显示库。
+#=======================================================================
+#config_interface: textconfig
+#config_interface: win32config
+#config_interface: wx
+
+#=======================================================================
+# DISPLAY_LIBRARY
+#
+# 显示库是显示 Bochs VGA 屏幕的代码。Bochs 有大约 10 种不同的显示库实现
+# 用于不同的平台。如果你使用多个 --with-* 选项运行 configure，
+# display_library 命令让你选择你想要运行的那个。
+# 如果你不写 display_library 行，Bochs 将为你选择一个默认值。
+#
+# 选择有：
+#   x              使用 X windows 接口，跨平台
+#   win32          使用原生 win32 库
+#   carbon         使用 Carbon 库（用于 MacOS X）
+#   macintosh      使用 MacOS 10 之前版本
+#   amigaos        使用原生 AmigaOS 库
+#   sdl            使用 SDL 1.2.x 库，跨平台
+#   sdl2           使用 SDL 2.x 库，跨平台
+#   term           仅文本，使用 curses/ncurses 库，跨平台
+#   rfb            提供与 AT&T 的 VNC 查看器的接口，跨平台
+#   vncsrv         使用 LibVNCServer 以支持扩展的 RFB(VNC)
+#   wx             使用 wxWidgets 库，跨平台
+#   nogui          完全不显示
+#
+# 注意：如果你使用 "wx" 配置界面，你也必须使用 "wx" 显示库。
+#
+# 特定选项：
+# 一些显示库现在支持特定选项来控制其行为。这些选项被多个显示库支持：
+#
+# "cmdmode"     - 在按下 F7 后调用标题栏按钮处理程序 (sdl, sdl2, win32, x)
+# "fullscreen"  - 以全屏模式启动 (sdl, sdl2)
+# "gui_debug"   - 使用 GTK 调试器 gui (sdl, sdl2, x) / Win32 调试器 gui (sdl, sdl2, win32)。
+#                 当使用 "globalini" 扩展时，调试器使用来自 BXSHARE 路径的 ini 文件（见下文）。
+# "hideIPS"     - 在状态栏中禁用 IPS 输出 (rfb, sdl, sdl2, term, vncsrv, win32, wx, x)
+# "nokeyrepeat" - 关闭主机键盘重复 (sdl, sdl2, win32, x)
+# "no_gui_console" - 使用系统控制台而不是内置的 gui 控制台 (rfb, sdl, sdl2, vncsrv, x)
+# "timeout"     - 等待客户端的时间（以秒为单位）(rfb, vncsrv)
+#
+# 查看下面的例子以了解其他当前支持的选项。
+# 不支持定显示库而设置选项也是支持的。
+#=======================================================================
+#display_library: amigaos
+#display_library: carbon
+#display_library: macintosh
+#display_library: nogui
+#display_library: rfb
+#display_library: sdl
+#display_library: sdl2
+#display_library: term
+#display_library: vncsrv
+# "traphotkeys" - 系统热键不由主机操作系统处理，而是发送给客户机
+#                 (win32 在鼠标捕获和全屏模式下：alt-tab, win, alt-space, alt-esc, ctrl-esc)
+# "autoscale"   - 根据桌面窗口大小，将小模拟窗口缩放 2、4 或 8 倍
+#display_library: win32, options="traphotkeys, autoscale"
+#display_library: wx
+#display_library: x, options="gui_debug:globalini"
+
+#=======================================================================
+# CPU:
+# 这定义了 Bochs 内部与 CPU 相关的参数：
+#
+#  MODEL（型号）:
+#    从所有支持的配置的预定义列表中选择要模拟的 CPU 配置。
+#    当使用此选项且值不同于 'bx_generic' 时，CPUID 选项的参数不再有效。
+#
+#  可以选择的 CPU 配置：
+# -----------------------------------------------------------------
+#  i386                       Intel 386SX
+#  i486dx4                    Intel 486DX4
+#  pentium                    Intel Pentium (P54C)
+#  pentium_mmx                Intel Pentium MMX
+#  amd_k6_2_chomper           AMD-K6(tm) 3D processor (Chomper)
+#  athlon_xp                  AMD Athlon(tm) XP Processor
+#  p2_klamath                 Intel Pentium II (Klamath)
+#  p3_katmai                  Intel Pentium III (Katmai)
+#  p4_willamette              Intel(R) Pentium(R) 4 (Willamette)
+#  core_duo_t2400_yonah       Intel(R) Core(TM) Duo CPU T2400 (Yonah)
+#  atom_n270                  Intel(R) Atom(TM) CPU N270
+#  p4_prescott_celeron_336    Intel(R) Celeron(R) 336 (Prescott)
+#  athlon64_clawhammer        AMD Athlon(tm) 64 Processor 2800+ (Clawhammer)
+#  athlon64_venice            AMD Athlon(tm) 64 Processor 3000+ (Venice)
+#  turion64_tyler             AMD Turion(tm) 64 X2 Mobile TL-60 (Tyler)
+#  phenom_8650_toliman        AMD Phenom X3 8650 (Toliman)
+#  core2_penryn_t9600         Intel Mobile Core 2 Duo T9600 (Penryn)
+#  corei5_lynnfield_750       Intel(R) Core(TM) i5   750 (Lynnfield)
+#  corei5_arrandale_m520      Intel(R) Core(TM) i5 M 520 (Arrandale)
+#  corei7_sandy_bridge_2600k  Intel(R) Core(TM) i7-2600K (Sandy Bridge)
+#  zambezi                    AMD FX(tm)-4100 Quad-Core Processor (Zambezi)
+#  trinity_apu                AMD A8-5600K APU (Trinity)
+#  ryzen                      AMD Ryzen 7 1700
+#  corei7_ivy_bridge_3770k    Intel(R) Core(TM) i7-3770K CPU (Ivy Bridge)
+#  corei7_haswell_4770        Intel(R) Core(TM) i7-4770 CPU (Haswell)
+#  broadwell_ult              Intel(R) Processor 5Y70 CPU (Broadwell)
+#  corei7_skylake_x           Intel(R) Core(TM) i7-7800X CPU (Skylake)
+#  corei3_cnl                 Intel(R) Core(TM) i3-8121U CPU (Cannonlake)
+#  corei7_icelake_u           QuadCore Intel Core i7-1065G7 (IceLake)
+#  tigerlake                  11th Gen Intel(R) Core(TM) i5-1135G7 (TigerLake)
+#  sapphire_rapids            Intel(R) Xeon(R) w9-3475X (Sappire Rapids)
+#  arrow_lake                 15th Gen Intel(R) Core(TM) Ultra 5 245K (ArrowLake)
+#
+#  ADD_FEATURES（添加特性）:
+#    在 MODEL 选择的 CPU 配置中启用一个或多个 CPU 特性。
+#    通过向现有 MODEL 添加特定特性或特性集，对于测试具有更新的虚构配置的 CPU 可能有用。
+#    要添加的特性列表通过空格或逗号分隔的字符串提供。
+#
+#  EXCLUDE_FEATURES（排除特性）:
+#    从 MODEL 选择的 CPU 配置中禁用一个或多个 CPU 特性。
+#    对于测试没有特定特性或特性集的 CPU 可能有用。
+#    当在启动现代操作系统遇到问题时，禁用 CPU 特性以查看它们是否是失败的原因可能有用。
+#    要排除的特性列表通过空格或逗号分隔的字符串提供。
+#
+#  COUNT（数量）:
+#    当 Bochs 编译为 SMP 模拟时，设置处理器数量:每个处理器的核心数:每个核心的线程数。
+#    Bochs 当前最多支持 14 个线程（传统 APIC）或 254 个线程（xAPIC 或更高版本）同时运行。
+#    如果 Bochs 编译时没有 SMP 支持，它将不接受不同于 1 的值。
+#
+#  QUANTUM（量子）:
+#    在将控制权返回给另一个 cpu 之前，处理器允许执行的最大指令数。
+#    此选项仅存在于编译时带有 SMP 支持的 Bochs 二进制文件中。
+#
+#  RESET_ON_TRIPLE_FAULT（三重故障时重置）:
+#    当发生三重故障时重置 CPU（强烈推荐）而不是 PANIC。
+#    记住，如果你试图在三重故障后继续，模拟将是完全错误的！
+#
+#  CPUID_LIMIT_WINNT（限制CPUID为WinNT）:
+#    确定是否将最大 CPUID 功能限制为 2。此模式是解决 WinNT 安装和启动问题所必需的。
+#
+#  MSRS（模型特定寄存器）:
+#    定义用户 CPU 模型特定寄存器 (MSRs) 规范的路径。参见 msrs.def 中的示例。
+#
+#  IGNORE_BAD_MSRS（忽略错误的MSRS）:
+#    忽略 Bochs 不理解的 MSR 引用；打印警告消息而不是生成 #GP 异常。
+#    默认情况下启用此选项，但如果启用了可配置的 MSRs，则此选项将不可用。
+#
+#  MWAIT_IS_NOP（MWAIT为空操作）:
+#    当启用此选项时，MWAIT 不会将 CPU 置于睡眠状态。
+#    此选项仅在 Bochs 编译时带有 --enable-monitor-mwait 时存在。
+#
+#  IPS（每秒指令数）:
+#    模拟的每秒指令数。这是 bochs 在你的机器上能够运行的 IPS 数量。
+#    你可以在启用 --enable-show-ips 选项的情况下重新编译 Bochs，以找到你主机的 capability。
+#    然后测量的 IPS 值将被记录到你的日志文件中或显示在状态栏中（如果 gui 支持）。
+#
+#    IPS 用于校准 bochs 模拟中的许多时间相关事件。
+#    例如，更改 IPS 会影响 VGA 更新的频率、键开始自动重复前的持续时间，
+#    以及 BogoMips 和其他基准测试的测量。
+#
+#  示例：
+#
+#  Bochs 机器/编译器                                 Mips
+# ______________________________________________________________________
+#  2.4.6 3.4Ghz Intel Core i7 2600 with Win7x64/g++ 4.5.2 85 到 95 Mips
+#  2.3.7 3.2Ghz Intel Core 2 Q9770 with WinXP/g++ 3.4     50 到 55 Mips
+#  2.3.7 2.6Ghz Intel Core 2 Duo with WinXP/g++ 3.4       38 到 43 Mips
+#  2.2.6 2.6Ghz Intel Core 2 Duo with WinXP/g++ 3.4       21 到 25 Mips
+#  2.2.6 2.1Ghz Athlon XP with Linux 2.6/g++ 3.4          12 到 15 Mips
+#=======================================================================
+cpu: model=core2_penryn_t9600, count=1, ips=50000000, reset_on_triple_fault=1, ignore_bad_msrs=1, msrs="msrs.def"
+cpu: cpuid_limit_winnt=0
+
+#=======================================================================
+# MEMORY（内存）
+# 设置你想要模拟的物理内存量。
+#
+# GUEST（客户机）:
+# 设置要模拟的客户机物理内存量。默认是 32MB，
+# 最大内存量仅受物理地址空间限制。
+#
+# HOST（主机）:
+# 设置你希望为客户机 RAM 模拟分配的主机内存量。
+# 可以分配比你想在客户机系统中模拟的内存更少的内存。
+# 这将欺骗客户机看到不存在的内存。一旦客户机系统触碰到新的内存块，
+# 它将从内存池中动态获取。如果客户机已经使用了所有分配的主机内存并想要更多，
+# 你将收到警告（通过 FATAL PANIC）。
+#
+# BLOCK_SIZE（块大小）:
+# 内存块大小选择主机内存分配的粒度。
+# 非常大的内存配置可能需要更大的内存块，而小内存配置可能希望内存块更小。
+# 默认内存块大小是 128K。
+#
+#=======================================================================
+memory: guest=512, host=256, block_size=512
+
+#=======================================================================
+# ROMIMAGE（ROM镜像）:
+# ROM BIOS 控制 PC 首次通电时的行为。
+# 通常，你可以使用源代码或二进制分发版中预编译的 BIOS，称为 BIOS-bochs-latest。
+# 默认的 ROM BIOS 通常从地址 0xfffe0000 开始加载，正好是 128k 长。
+# Bochs BIOS 的旧版本通常从地址 0xffff0000 开始加载，正好是 64k 长。
+# 现在支持在内存顶部使用外部大 BIOS 镜像（最多 512k），
+# 但我们仍然推荐使用 Bochs 分发的 BIOS。
+#
+#  FILE（文件）
+#    BIOS 镜像文件的名称。你可以使用环境变量 $BXSHARE 来指定 BIOS 的位置。
+#
+#  ADDRESS（地址）
+#    起始地址是可选的，因为它可以从镜像大小计算出来。
+#
+#  OPTIONS（选项）
+#    Bochs BIOS 当前仅支持选项 "fastboot" 来跳过启动菜单延迟。
+#
+#  FLASH_DATA（闪存数据）
+#    此参数定义了在启动时加载（如果存在）并在退出时保存（如果已修改）的
+#    闪存 BIOS 配置空间的文件名。Bochs BIOS 尚未使用此特性。
+#
+# 请注意，如果你使用 BIOS-bochs-legacy romimage BIOS 选项，
+# 你不能使用支持 PCI 的 VGA ROM BIOS。
+# 请注意，如果你在 romimage BIOS 选项中使用 SeaBIOS 二进制文件，
+# 你必须使用支持 PCI 的 VGA ROM BIOS。
+#=======================================================================
+romimage: file=$BXSHARE/BIOS-bochs-latest, options=fastboot
+#romimage: file=$BXSHARE/BIOS-bochs-legacy
+#romimage: file=$BXSHARE/bios.bin-1.13.0 # http://www.seabios.org/SeaBIOS
+#romimage: file=$BXSHARE/i440fx.bin, flash_data=escd.bin
+#romimage: file=asus_p6np5.bin, flash_data=escd.bin
+#romimage: file=mybios.bin, address=0xfff80000 # 内存顶部的 512k
+
+#=======================================================================
+# VGAROMIMAGE（VGA ROM镜像）
+# 你现在需要加载一个 VGA ROM BIOS 到 C0000。
+# 请注意，如果你使用 BIOS-bochs-legacy romimage BIOS 选项，
+# 你不能使用支持 PCI 的 VGA ROM BIOS 选项，如下面显示的 cirrus 选项。
+#=======================================================================
+vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest.bin
+#vgaromimage: file=bios/VGABIOS-lgpl-latest-cirrus.bin
+#vgaromimage: file=$BXSHARE/vgabios-cirrus.bin-1.13.0 # http://www.seabios.org/SeaVGABIOS
+#vgaromimage: file=bios/VGABIOS-elpin-2.40
+
+#=======================================================================
+# OPTROMIMAGE[1-4]（可选ROM镜像）:
+# 你现在可以加载最多 4 个可选的 ROM 镜像。确保使用只读区域，
+# 通常在 C8000 和 EFFFF 之间。这些可选的 ROM 镜像不应覆盖
+# rombios（位于 F0000-FFFFF）和 videobios（位于 C0000-C7FFF）。
+# 如果这些 ROM 镜像包含正确的签名 (0x55AA) 和有效的校验和，它们将被 bios 初始化。
+# 它也可以是在模拟中上传一些任意代码/数据的便捷方式，这些代码/数据可以被引导加载程序检索。
+#=======================================================================
+#optromimage1: file=optionalrom.bin, address=0xd0000
+#optromimage2: file=optionalrom.bin, address=0xd1000
+#optromimage3: file=optionalrom.bin, address=0xd2000
+#optromimage4: file=optionalrom.bin, address=0xd3000
+
+#optramimage1: file=/path/file1.img, address=0x0010000
+#optramimage2: file=/path/file2.img, address=0x0020000
+#optramimage3: file=/path/file3.img, address=0x0030000
+#optramimage4: file=/path/file4.img, address=0x0040000
+
+#=======================================================================
+# VGA:
+# 这定义了与 VGA 显示相关的参数
+#
+#   EXTENSION（扩展）
+#     这里你可以指定要使用的显示扩展。使用值 'none' 你可以使用没有扩展的标准 VGA。
+#     其他支持的值是用于 Bochs VBE 的 'vbe'，用于 Cirrus SVGA 支持的 'cirrus'
+#     和用于 Voodoo Graphics 支持的 'voodoo'（参见 'voodoo' 选项）。
+#
+#   UPDATE_FREQ（更新频率）
+#     此参数指定每秒显示更新的次数。
+#     默认情况下，VGA 更新定时器使用实时引擎，值为 10（有效值：1 到 75）。
+#     此参数可以在运行时更改。特殊值 0 启用支持使用模拟图形设备的帧率。
+#
+#   REALTIME（实时）
+#     如果设置为 1（默认），VGA 定时器基于实时，否则它由 cpu 驱动并取决于 ips 设置。
+#     如果主机速度慢（低 ips, update_freq）并且客户机适当地使用 HLT，
+#     将此设置为 0 和 "clock: sync=none" 可能会改善客户机在空闲时客户机 GUI 的响应性。
+#
+#   DDC（显示数据通道）
+#     此参数定义了返回监视器 EDID 数据的 DDC 模拟的行为。
+#     默认情况下使用 'Bochs Screen' 的 'builtin' 值。
+#     其他选择是 'disabled'（无 DDC 模拟）和 'file'（从文件读取监视器 EDID，路径名用冒号分隔）。
+#
+#   VBE_MEMSIZE（VBE内存大小）
+#     使用此参数可以定义 Bochs VBE 扩展的内存大小。
+#     有效值是 4, 8, 16 和 32 MB（默认是 16 MB）。
+# 示例：
+#   vga: extension=cirrus, update_freq=10, ddc=builtin
+#=======================================================================
+#vga: extension=vbe, update_freq=5, realtime=1, ddc=file:monitor.bin
+
+#=======================================================================
+# VOODOO:
+# 这定义了 Voodoo Graphics 模拟（实验性）。当前支持的型号是
+# 'voodoo1', 'voodoo2', 'banshee' 和 'voodoo3'。
+# Voodoo2 支持尚未完成，但几乎可用。Banshee 和 Voodoo3 支持正在开发中，但基本可用。
+# 2D/3D 卡需要外部 VGA BIOS，并且 vga 扩展选项必须设置为 'voodoo'。
+# 如果选择了 i440BX PCI 芯片组，它们可以分配给 AGP（插槽 #5）。
+# 所有型号的 gui 屏幕更新时序由相关的 'vga' 选项控制。
+#
+# 示例：
+#   voodoo: enabled=1, model=voodoo2
+#=======================================================================
+#voodoo: enabled=1, model=voodoo1
+
+#=======================================================================
+# KEYBOARD（键盘）:
+# 这定义了与模拟键盘相关的参数
+#
+#   TYPE（类型）:
+#     通过键盘控制器的"识别键盘"命令返回的键盘类型。
+#     它必须是 "xt", "at" 或 "mf" 之一。默认为 "mf"。对几乎所有人都应该没问题。
+#     一个已知的例外是法式 Mac，它确实有一个类似 "at" 的键盘。
+#
+#   SERIAL_DELAY（串行延迟）:
+#     一个字符从键盘通过串行路径传输到控制器所需的大致时间（微秒）。
+#
+#   PASTE_DELAY（粘贴延迟）:
+#     尝试将字符粘贴到键盘控制器之间的近似时间（微秒）。
+#     这为客户操作系统处理字符流留出了时间。理想设置取决于你的操作系统如何处理字符。
+#     默认的 100000 微秒（0.1 秒）被选中是因为它在 Windows 中能一致工作。
+#     如果你的操作系统在粘贴过程中丢失字符，增加粘贴延迟直到它停止丢失字符。
+#
+#   KEYMAP（键映射）:
+#     这启用了将物理本地化键盘重新映射到虚拟化 us 键盘的功能，正如 PC 架构所期望的那样。
+#     使用语言指定符而不是文件名也是支持的。粘贴特性也需要键映射。
+#
+#   USER_SHORTCUT（用户快捷键）:
+#     这定义了你按下标题栏中的"user"按钮时发送的键盘快捷键。
+#     快捷键字符串是最多 3 个键名（如下所列）的组合，用 '-' 字符分隔。
+#     有效的键名：
+#     "alt", "bksl", "bksp", "ctrl", "del", "down", "end", "enter", "esc",
+#     "f1", ... "f12", "home", "ins", "left", "menu", "minus", "pgdwn", "pgup",
+#     "plus", "power", "print", "right", "scrlck", "shift", "space", "tab", "up"
+#     和 "win"。
+
+# 示例：
+#   keyboard: type=mf, serial_delay=200, paste_delay=100000
+#   keyboard: keymap=gui/keymaps/x11-pc-de.map
+#   keyboard: user_shortcut=ctrl-alt-del
+#=======================================================================
+#keyboard: type=mf, serial_delay=150
+
+#=======================================================================
+# MOUSE（鼠标）:
+# 这定义了模拟鼠标类型的参数、鼠标捕获的初始状态以及切换它的运行时方法。
+#
+#  TYPE（类型）:
+#  使用鼠标类型选项，你可以选择要模拟的鼠标类型。
+#  默认值是 'ps2'。其他选择是 'imps2'（PS/2 上的滚轮鼠标）、
+#  'serial', 'serial_wheel', 'serial_msys'（一个 com 端口需要设置 'mode=mouse'）
+#  'inport' 和 'bus'（如果存在）。要将鼠标连接到 USB 端口，
+#  请参见 'usb_uhci', 'usb_ohci', 'usb_ehci' 或 'usb_xhci' 选项（需要 PCI 和 USB 支持）。
+#
+#  ENABLED（启用）:
+#  除非 'enabled' 选项设置为 0，否则 Bochs gui 会创建鼠标"事件"。
+#  硬件模拟本身不会因此被禁用。
+#  除非你有特定原因默认启用鼠标，否则建议将其关闭。
+#  你也可以在运行时切换鼠标使用（RFB, SDL, Win32, wxWidgets 和 X11 - 见下文）。
+#
+#  TOGGLE（切换）:
+#  在运行时切换鼠标捕获的默认方法是按下 CTRL 键和鼠标中键（'ctrl+mbutton'）。
+#  此选项允许将方法更改为 'ctrl+f10'（像 DOSBox）、'ctrl+alt'（传统 QEMU）、
+#  'ctrl+alt+g'（QEMU 当前）或 'f12'。
+#
+# 示例：
+#   mouse: enabled=1
+#   mouse: type=imps2, enabled=1
+#   mouse: type=serial, enabled=1
+#   mouse: enabled=0, toggle=ctrl+f10
+#=======================================================================
+mouse: enabled=0
+
+#=======================================================================
+# PCI:
+# 这定义了设置 Bochs PCI 模拟的参数：
+#
+#  ENABLED（启用）:
+#  如果 Bochs 编译时带有 PCI 支持，则默认启用。
+#
+#  CHIPSET（芯片组）:
+#  当前支持 i430FX, i440FX 和 i440BX（有限）芯片组，默认是 i440FX。
+#
+#  SLOTx（插槽x）:
+#  可以指定连接到 PCI 插槽的设备。最多有 5 个插槽可用。
+#  对于组合的 PCI/ISA 设备，如果要模拟 PCI 模型（cirrus, ne2k 和 pcivga），则必须分配给插槽。
+#  也为 PCI-only 设备设置插槽是支持的，但如果未指定，它们会自动分配
+#  （e1000, es1370, pcidev, pcipnic, usb_ehci, usb_ohci, usb_xhci, voodoo）。
+#  除了网络设备 ne2k 和 e1000 外，所有设备模型在插槽配置中只能使用一次。
+#  在 i440BX 芯片组的情况下，插槽 #5 是 AGP 插槽。当前只有 'voodoo' 设备可以分配给 AGP。
+#
+#  ADVOPTS（高级选项）:
+#  使用高级 PCI 选项可以控制 PCI 芯片组的行为。
+#  这些选项可以指定为逗号分隔的值。
+#  默认情况下，"Bochs i440FX" 芯片组启用了 ACPI 和 HPET 设备，但原始的 i440FX 不支持它们。
+#  选项 'noacpi' 和 'nohpet' 使得可以禁用它们。
+#  选项 'noagp' 禁用了 i440BX 芯片组不完整的 AGP 子系统。
+#
+# 示例：
+#   pci: enabled=1, chipset=i440fx, slot1=pcivga, slot2=ne2k, advopts=noacpi
+#=======================================================================
+pci: enabled=1, chipset=i440fx
+
+#=======================================================================
+# CLOCK（时钟）:
+# 这定义了 Bochs 内部时钟的参数：
+#
+#  SYNC（同步）:
+#  这定义了如何将 Bochs 内部时间与实时同步的方法。
+#  使用值 'none'，Bochs 时间依赖于 IPS 值，不使用主机时间同步。
+#  'slowdown' 方法牺牲性能以保持可重现性，同时允许主机时间关联。
+#  'realtime' 方法牺牲可重现性以保持性能和主机时间关联。
+#  可以同时启用两种同步方法。
+#
+#  RTC_SYNC（RTC同步）:
+#  如果此选项与实时同步一起启用，则 RTC 以实时速度运行。默认情况下禁用此特性。
+#
+#  TIME0（起始时间）:
+#  指定虚拟机启动（引导）时间。使用 time(2) 系统调用返回的时间值
+#  或 ctime(3) 系统调用返回的字符串。
+#  如果未设置 time0 值，或者 time0 等于 1（特殊情况），
+#  或者 time0 等于 'local'，模拟将在当前本地主机时间启动。
+#  如果 time0 等于 2（特殊情况），或者 time0 等于 'utc'，模拟将在当前 utc 时间启动。
+#
+# 语法：
+#  clock: sync=[none|slowdown|realtime|both], time0=[timeValue|local|utc]
+#
+# 示例：
+#   clock: sync=none,     time0=local       # 现在（本地时间）
+#   clock: sync=slowdown, time0=315529200   # 1980年1月1日 00:00:00 星期二
+#   clock: sync=none,     time0="Mon Jan  1 00:00:00 1990" # 631148400
+#   clock: sync=realtime, time0=938581955   # 1999年9月29日 07:12:35 星期三
+#   clock: sync=realtime, time0="Sat Jan  1 00:00:00 2000" # 946681200
+#   clock: sync=none,     time0=1           # 现在（本地时间）
+#   clock: sync=none,     time0=utc         # 现在（utc/gmt）
+#
+# 默认值是 sync=none, rtc_sync=0, time0=local
+#=======================================================================
+#clock: sync=none, time0=local
+
+#=======================================================================
+# CMOSIMAGE（CMOS镜像）:
+# 这定义了一个大小为 128 字节的二进制镜像文件，可以在启动时加载到 CMOS RAM 中。
+#  rtc_init 参数控制是否使用存储在镜像中的值初始化 RTC。
+#  默认情况下使用给 clock 选项的 time0 参数。
+#  使用 'rtc_init=image'，镜像是初始时间的来源。
+#
+# 示例：
+#   cmosimage: file=cmos.img, rtc_init=image
+#=======================================================================
+#cmosimage: file=cmos.img, rtc_init=time0
+
+#=======================================================================
+# private_colormap（私有颜色映射）: 请求 GUI 创建并使用它自己的非共享颜色映射。
+#                   当在 bochs 窗口中时，将使用此颜色映射。
+#                   如果未启用，可能会使用共享颜色映射方案。
+#                   并非在所有 GUI 上都实现。
+#
+# 示例：
+#   private_colormap: enabled=1
+#   private_colormap: enabled=0
+#=======================================================================
+private_colormap: enabled=0
+
+#=======================================================================
+# FLOPPYA（软盘A）:
+# 指向软盘镜像文件或设备的路径名
+# 如果你从 'a'（或 'floppy'）启动，这应该是一个可启动的软盘（镜像/设备）。
+#
+# 你可以将介质的初始状态设置为 'ejected' 或 'inserted'。
+#   floppya: 2_88=path, status=ejected    (2.88M 3.5"  介质)
+#   floppya: 1_44=path, status=inserted   (1.44M 3.5"  介质)
+#   floppya: 1_2=path, status=ejected     (1.2M  5.25" 介质)
+#   floppya: 720k=path, status=inserted   (720K  3.5"  介质)
+#   floppya: 360k=path, status=inserted   (360K  5.25" 介质)
+#   floppya: 320k=path, status=inserted   (320K  5.25" 介质)
+#   floppya: 180k=path, status=inserted   (180K  5.25" 介质)
+#   floppya: 160k=path, status=inserted   (160K  5.25" 介质)
+#   floppya: image=path, status=inserted  (根据镜像大小猜测介质类型)
+#   floppya: 1_44=vvfat:path, status=inserted  (使用目录作为 VFAT 介质)
+#   floppya: type=1_44                    (1.44M 3.5" 软盘驱动器，无介质)
+#
+# 路径应该是磁盘镜像文件的名称。在 Unix 上，你可以使用原始设备名称，例如 Linux 上的 /dev/fd0。
+# 在 win32 平台上，使用驱动器号如 a: 或 b: 作为路径。
+#  参数 'image' 仅适用于镜像文件。在这种情况下，大小必须匹配一种支持的类型。
+#  参数 'type' 可用于启用没有介质和状态指定的软盘驱动器。
+#  通常驱动器类型是根据介质类型设置的。
+#  可选参数 'write_protected' 可用于控制介质写保护开关。默认情况下它是关闭的。
+#=======================================================================
+floppya: 1_44=/dev/fd0, status=inserted
+#floppya: image=../1.44, status=inserted
+#floppya: 1_44=/dev/fd0H1440, status=inserted
+#floppya: 1_2=../1_2, status=inserted
+#floppya: 1_44=a:, status=inserted
+#floppya: 1_44=a.img, status=inserted, write_protected=1
+#floppya: 1_44=/dev/rfd0a, status=inserted
+
+#=======================================================================
+# FLOPPYB（软盘B）:
+# 语法参见上面的 FLOPPYA
+#=======================================================================
+#floppyb: 1_44=b:, status=inserted
+#floppyb: 1_44=b.img, status=inserted
+
+#=======================================================================
+# ATA0, ATA1, ATA2, ATA3
+# 用于硬盘和 cdrom 的 ATA 控制器
+#
+# ata[0-3]: enabled=[0|1], ioaddr1=addr, ioaddr2=addr, irq=number
+#
+# 这些选项启用最多 4 个 ata 通道。对于每个通道，必须指定两个基本 io 地址和 irq。
+#
+# ata0 和 ata1 默认启用，具有如下所示的值
+#
+# 示例：
+#   ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+#   ata1: enabled=1, ioaddr1=0x170, ioaddr2=0x370, irq=15
+#   ata2: enabled=1, ioaddr1=0x1e8, ioaddr2=0x3e0, irq=11
+#   ata3: enabled=1, ioaddr1=0x168, ioaddr2=0x360, irq=9
+#=======================================================================
+ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+ata1: enabled=1, ioaddr1=0x170, ioaddr2=0x370, irq=15
+ata2: enabled=0, ioaddr1=0x1e8, ioaddr2=0x3e0, irq=11
+ata3: enabled=0, ioaddr1=0x168, ioaddr2=0x360, irq=9
+
+#=======================================================================
+# ATA[0-3]-MASTER（主设备）, ATA[0-3]-SLAVE（从设备）
+#
+# 这定义了所有连接的 ata 设备的类型和特性：
+#   type=       连接的设备类型 [disk|cdrom]
+#   mode=       仅对磁盘有效 [flat|concat|dll|sparse|vmware3|vmware4]
+#                                    [undoable|growing|volatile|vpc|vbox|vvfat]
+#   path=       镜像/目录的路径
+#   cylinders=  仅对磁盘有效
+#   heads=      仅对磁盘有效
+#   spt=        仅对磁盘有效
+#   status=     仅对 cdrom 有效 [inserted|ejected]
+#   biosdetect= BIOS 检测类型 [auto|cmos|none]
+#   translation=BIOS 的转换类型，仅对磁盘有效 [none|lba|large|rechs|auto]
+#   model=      identify device 命令返回的字符串
+#   journal=    可撤销、易失性和 vvfat 磁盘的 redolog 的可选文件名
+#
+# 将其指向硬盘镜像文件、cdrom iso 文件或物理 cdrom 设备。
+#  要创建硬盘镜像，请尝试运行 bximage。它将帮助你选择大小，然后建议一个与之配合使用的行。
+#
+# 在 UNIX 中，可以将原始设备用作 Bochs 硬盘，但我们不推荐这样做。
+#  在 Windows 中没有简单的方法。
+#
+# 在 windows 中，对于 cdrom 应使用驱动器号加冒号的表示法。
+#  根据 windows 和驱动程序版本，你可能只能访问系统中的"第一个" cdrom。
+#  在 MacOSX 上，使用 path="drive" 来访问物理驱动器。
+#
+# 对于硬盘，路径是必需的。如果 CHS 设置为 0/0/0（使用 heads=16 和 spt=63 计算柱面数），
+#  则磁盘几何自动检测适用于由 bximage 创建的镜像。
+#  对于其他硬盘镜像和模式，cylinders、heads 和 spt 是必需的。
+#  在所有情况下，从镜像报告的磁盘大小必须正好是 C*H*S*512。
+#
+# 默认值是：
+#   mode=flat, biosdetect=auto, translation=auto, model="Generic 1234"
+#
+# biosdetect 选项当前对 bios 没有影响
+#
+# 示例：
+#   ata0-master: type=disk, mode=flat, path=10M.sample, cylinders=306, heads=4, spt=17
+#   ata0-slave:  type=disk, mode=flat, path=20M.sample, cylinders=615, heads=4, spt=17
+#   ata1-master: type=disk, mode=flat, path=30M.sample, cylinders=615, heads=6, spt=17
+#   ata1-slave:  type=disk, mode=flat, path=46M.sample, cylinders=940, heads=6, spt=17
+#   ata2-master: type=disk, mode=flat, path=62M.sample, cylinders=940, heads=8, spt=17
+#   ata2-slave:  type=disk, mode=flat, path=112M.sample, cylinders=900, heads=15, spt=17
+#   ata3-master: type=disk, mode=flat, path=483M.sample, cylinders=1024, heads=15, spt=63
+#   ata3-slave:  type=cdrom, path=iso.sample, status=inserted
+#=======================================================================
+ata0-master: type=disk, mode=flat, path="30M.sample"
+#ata0-master: type=disk, mode=flat, path="30M.sample", cylinders=615, heads=6, spt=17
+#ata0-master: type=disk, mode=flat, path="c.img", cylinders=0 # 自动检测
+#ata0-slave: type=disk, mode=vvfat, path=/bochs/images/vvfat, journal=vvfat.redolog
+#ata0-slave: type=cdrom, path=D:, status=inserted
+#ata0-slave: type=cdrom, path=/dev/cdrom, status=inserted
+#ata0-slave: type=cdrom, path="drive", status=inserted
+#ata0-slave: type=cdrom, path=/dev/rcd0d, status=inserted
+
+#=======================================================================
+# BOOT（启动）:
+# 这定义了启动顺序。现在你可以指定最多 3 个启动驱动器，
+# 可以是 'floppy', 'disk', 'cdrom' 或 'network'（启动 ROM）。
+# 也支持传统的 'a' 和 'c'。新的启动选择 'usb' 仅由 i440fx.bin BIOS 支持。
+# 示例：
+#   boot: floppy
+#   boot: cdrom, disk
+#   boot: network, usb, disk
+#   boot: cdrom, floppy, disk
+#=======================================================================
+#boot: floppy
+boot: disk
+
+#=======================================================================
+# FLOPPY_BOOTSIG_CHECK（软盘启动签名检查）: disabled=[0|1]
+# 启用或禁用对启动软盘的 0xaa55 签名检查
+# 默认为 disabled=0
+# 示例：
+#   floppy_bootsig_check: disabled=0
+#   floppy_bootsig_check: disabled=1
+#=======================================================================
+floppy_bootsig_check: disabled=0
+
+#=======================================================================
+# LOG（日志）:
+# 给出你希望 Bochs 调试和各种输出写入的日志文件的路径。
+# 如果你不使用此选项或将文件名设置为 '-'，则输出将写入控制台。
+# 如果你真的不想要它，请将其设置为 "/dev/null" (Unix) 或 "nul" (win32)。 :^(
+#
+# 示例：
+#   log: ./bochs.out
+#   log: /dev/tty
+#=======================================================================
+#log: /dev/null
+log: bochsout.txt
+
+#=======================================================================
+# LOGPREFIX（日志前缀）:
+# 这处理每行日志前附加的字符串的格式。
+# 你可以使用这些特殊的标记：
+#   %t : 11 位十进制数字的定时器滴答
+#   %i : 8 位十六进制数字的 cpu 当前 eip（在 SMP 配置中被忽略）
+#   %e : 1 个字符的事件类型 ('i'nfo, 'd'ebug, 'p'anic, 'e'rror)
+#   %d : 5 个字符的字符串，表示设备，在括号内
+#
+# 默认 : %t%e%d
+# 示例：
+#   logprefix: %t-%e-@%i-%d
+#   logprefix: %i%e%d
+#=======================================================================
+#logprefix: %t%e%d
+
+#=======================================================================
+# LOG CONTROLS（日志控制）
+#
+# Bochs 有四个事件日志严重性级别。
+#   panic（紧急）: 无法继续。如果你选择在紧急情况后继续，
+#          如果出现奇怪的行为或崩溃，不要感到惊讶。
+#   error（错误）: 出了点问题，但继续模拟可能是安全的。
+#   info（信息）: 有趣或有用的消息。
+#   debug（调试）: 仅在调试代码时有用的消息。这可能会每秒吐出数千条。
+#
+# 对于每个级别的事件，你可以选择退出 Bochs ('fatal'), 'ask', 'warn', 'report' 或 'ignore'。
+#  选择 'ask' 和 'warn' 并非所有 gui 都支持，因为它们应该弹出对话框。
+#  'warn' 对话框设计用于确认错误，而 'ask' 对话框通常用于紧急情况并询问用户如何继续。
+#
+# 也可以为每个 Bochs 功能单独指定要执行的'action'
+# （例如，除了 cdrom 之外的所有的紧急情况都崩溃，并且只报告那些）。
+#  请参阅用户文档中的'log function'模块列表。
+#
+# 如果你遇到许多紧急情况，将紧急情况操作更改为 report 而不是 fatal 可能会有所帮助。
+#  但是，请注意，在紧急情况之后执行的任何操作都是未知领域，并可能导致 bochs 变得不稳定。
+#  紧急情况是"优雅退出"，所以如果你禁用它，你可能会得到一场 spectacular disaster。
+#=======================================================================
+panic: action=ask
+error: action=report
+info: action=report
+debug: action=ignore, pci=report # 报告来自模块 'pci' 的 BX_DEBUG
+
+#=======================================================================
+# DEBUGGER_LOG（调试器日志）:cpu
+# 给出你希望 Bochs 记录调试器输出的日志文件的路径。
+# 如果你真的不想要它，请将其设置为 /dev/null 或 '-'。 :^(
+#
+# 示例：
+#   debugger_log: ./debugger.out
+#=======================================================================
+#debugger_log: /dev/null
+#debugger_log: debugger.out
+debugger_log: -
+
+#=======================================================================
+# COM1, COM2, COM3, COM4:
+# 这定义了一个串行端口（UART 类型 16550A）。在 'term' 模式下，你可以指定一个设备用作 com1。
+#  这可以是一个真实的串行线路，或一个 pty。
+#  要使用 pty（在 X/Unix 下），创建两个窗口（通常是 xterms）。
+#  其中一个将运行 bochs，另一个将充当 com1。
+#  使用 `tty` 命令找出 com1 窗口的 tty，并将其用作 `dev` 参数。
+#  然后在 com1 窗口中执行 `sleep 1000000` 以防止 shell 干扰事物，并在另一个窗口中运行 bochs。
+#  对 com1（端口 0x3f8）的串行 I/O 都将进入另一个窗口。
+#  在 socket* 和 pipe*（仅 win32）模式下，Bochs 成为 socket/命名管道客户端或服务器。
+#  在客户端模式下，它连接到已运行的服务器（如果连接失败，Bochs 将 com 端口视为未连接）。
+#  在服务器模式下，它打开 socket/命名管道并等待客户端应用程序连接到它，然后才开始模拟。
+#  此模式对于远程调试很有用（例如，使用 gdb 的 "target remote host:port" 命令
+#  或 windbg 的命令行选项 -k com:pipe,port=\\.\pipe\pipename）。
+#  Socket 模式使用简单的 TCP 通信，管道模式使用双工字节模式管道。
+#  其他串行模式是 'null'（无输入/输出）、'file'（输出到指定为 'dev' 参数的文件，可在运行时更改）、
+#  'raw'（使用真实串行端口 - 在 win32 上部分实现）、
+#  'mouse'（标准串行鼠标 - 需要鼠标选项设置 'type=serial', 'type=serial_wheel' 或 'type=serial_msys'）。
+#
+# 示例：
+#   com1: enabled=1, mode=null
+#   com1: enabled=1, mode=mouse
+#   com2: enabled=1, mode=file, dev=serial.out
+#   com3: enabled=1, mode=raw, dev=com1
+#   com3: enabled=1, mode=socket-client, dev=localhost:8888
+#   com3: enabled=1, mode=socket-server, dev=localhost:8888
+#   com4: enabled=1, mode=pipe-client, dev=\\.\pipe\mypipe
+#   com4: enabled=1, mode=pipe-server, dev=\\.\pipe\mypipe
+#=======================================================================
+#com1: enabled=1, mode=term, dev=/dev/ttyp9
+
+
+#=======================================================================
+# PARPORT1, PARPORT2（并口）:
+# 这定义了一个并行（打印机）端口。当打开并定义了输出文件时，
+#  模拟的打印机端口将客户操作系统打印的字符发送到输出文件中。
+#  在某些平台上，可以使用设备文件名将数据发送到真实的并行端口
+#  （例如 Linux 上的 "/dev/lp0"，win32 平台上的 "lpt1"）。
+#  输出文件可以在运行时更改。
+#
+# 示例：
+#   parport1: enabled=1, file="parport.out"
+#   parport2: enabled=1, file="/dev/lp0"
+#   parport1: enabled=0
+#=======================================================================
+parport1: enabled=1, file="parport.out"
+
+#=======================================================================
+# SOUND（声音）:
+# 这定义了用于波形（PCM）输入/输出和 MIDI 输出特性的底层声音驱动程序，
+#  以及（如果需要）要使用的设备。它可以具有以下多个属性。
+#  所有属性的格式为 sound: property=value
+#
+# waveoutdrv（波形输出驱动）:
+#      这定义了用于 waveout 特性的驱动程序。
+#      可能的值是 'file'（所有波形数据发送到文件）、'dummy'（无输出）、
+#      'pulse', 'sdl'（两者都是跨平台的）和平台相关的驱动程序 'alsa', 'oss', 'osx' 和 'win'。
+# waveout（波形输出）:
+#      这定义了用于波形输出的设备（如果需要），或用于 'file' 驱动程序的输出文件。
+# waveindrv（波形输入驱动）:
+#      这定义了用于 wavein 特性的驱动程序。
+#      可能的值是 'dummy'（录制静音）、'pulse', 'sdl'（两者都是跨平台的）
+#      和平台相关的驱动程序 'alsa', 'oss' 和 'win'。
+# wavein（波形输入）:
+#      这定义了用于波形输入的设备（如果需要）。
+# midioutdrv（MIDI输出驱动）:
+#      这定义了用于 MIDI 输出特性的驱动程序。
+#      可能的值是 'file'（所有 MIDI 数据发送到文件）、'dummy'（无输出）
+#      和平台相关的驱动程序 'alsa', 'oss', 'osx' 和 'win'。
+# midiout（MIDI输出）:
+#      这定义了用于 MIDI 输出的设备（如果需要）。
+# driver（驱动）:
+#      这定义了用于所有声音特性的驱动程序，只需一个属性。
+#      可能的值是 'default'（平台默认值）和上述所有其他选择。
+#      使用特定的驱动程序参数覆盖一个或多个设置是可能的。
+#
+# 不同驱动程序的示例：
+#   sound: waveoutdrv=sdl, waveindrv=alsa, midioutdrv=dummy
+#=======================================================================
+sound: driver=default, waveout=/dev/dsp. wavein=, midiout=
+
+#=======================================================================
+# SPEAKER（扬声器）:
+# 这定义了 PC 扬声器输出模式。在 'sound' 模式下，蜂鸣声由
+#  作为底层声音支持一部分的方波发生器产生。
+#  在此模式下，可以使用 'volume' 参数设置输出音量（0 - 15）。
+#  'system' 模式仅在 Linux 和 Windows 上可用。
+#  在 Linux 上，使用 /dev/console 进行输出，在 Windows 上使用 Beep() 函数。
+#  'gui' 模式将蜂鸣声转发到相关的 gui 方法（当前仅由 Carbon gui 使用）。
+#=======================================================================
+speaker: enabled=1, mode=sound, volume=15
+
+#=======================================================================
+# SB16:
+# 这定义了 SB16 声音模拟。它可以具有以下多个属性。
+#  所有属性的格式为 sb16: property=value
+#
+# enabled（启用）:
+#      此可选属性控制 SB16 模拟的存在。除非使用此属性并将其设置为 0，否则模拟是打开的。
+# midimode（MIDI模式）: 此参数指定如何处理 MIDI 输出。
+#       0 = 无输出
+#       1 = 输出到声音选项指定的设备（系统相关）
+#       2 = MIDI 或原始数据输出到文件（取决于文件扩展名）
+#       3 = 双重输出（模式 1 和 2 同时）
+# midifile（MIDI文件）: 这是存储 midi 输出的文件（midimode 2 或 3）。
+# wavemode（波形模式）: 此参数指定如何处理 PCM 输出。
+#       0 = 无输出
+#       1 = 输出到声音选项指定的设备（系统相关）
+#       2 = VOC, WAV 或原始数据输出到文件（取决于文件扩展名）
+#       3 = 双重输出（模式 1 和 2 同时）
+# wavefile（波形文件）: 这是存储波形输出的文件（wavemode 2 或 3）。
+# loglevel（日志级别）:
+#       0=无日志
+#       1=资源更改、midi 程序和音库更改
+#       2=严重错误
+#       3=所有错误
+#       4=所有错误加上所有端口访问
+#       5=所有错误和端口访问加上大量额外信息
+# log:  写入 sb16 模拟器消息的文件。
+# dmatimer（DMA定时器）:
+#       DMA 周期每秒的微秒数。使其更小以修复不连续的声音。
+#       1000000 通常是一个好值。这需要 CPU 选项的 IPS 参数设置合理正确，
+#       并且还取决于时钟同步设置。
+#
+# 输出模式示例：
+#   sb16: midimode=2, midifile="output.mid", wavemode=1 # MIDI 到文件
+#   sb16: midimode=1, wavemode=3, wavefile="output.wav" # 波形到文件和设备
+#=======================================================================
+#sb16: midimode=1, wavemode=1, loglevel=2, log=sb16.log, dmatimer=900000
+
+#=======================================================================
+# ES1370:
+# 这定义了 ES1370 声音模拟（录制和播放 - 除了同时输出 DAC1+DAC2）。
+#  参数 'enabled' 控制设备的存在。
+#  波形和 MIDI 输出可以使用参数 'wavemode', 'wavefile', 'midimode' 和 'midifile'
+#  发送到设备、文件或两者。有关这些参数的描述，请参见 SB16 指令。
+#
+# 示例：
+#   es1370: enabled=1, wavemode=1                       # 使用 'sound' 参数
+#   es1370: enabled=1, wavemode=2, wavefile=output.voc  # 发送输出到文件
+#=======================================================================
+#es1370: enabled=1, wavemode=1
+
+#=======================================================================
+# ne2k: NE2000 兼容以太网适配器
+#
+# 格式：
+# ne2k: card=CARD, enabled=1, type=TYPE, ioaddr=IOADDR, irq=IRQ, mac=MACADDR,
+#       ethmod=MODULE, ethdev=DEVICE, script=SCRIPT, bootrom=BOOTROM
+#
+# CARD: 这是使用此 ne2k 配置行配置的从零开始的卡号。现在最多支持 4 个设备（0...3）。
+#  如果未指定，以下参数适用于卡 #0。
+#
+# TYPE: 这是要模拟的卡类型（"isa" 或 "pci"）。如果未指定，
+#  如果分配给 pci 插槽，卡 #0 默认为 "pci"。对于额外的卡，应设置 type 参数。
+#
+# IOADDR, IRQ: 你可能不需要更改 ioaddr 和 irq，除非存在 IRQ 冲突。
+#  当将 ne2k 分配给 PCI 插槽或将类型设置为 'pci' 时，这些参数被忽略。
+#
+# MAC: MAC 地址绝对不能与网络上任何机器的地址匹配。
+#  此外，第一个字节必须是偶数（位 0 设置表示多播地址），
+#  并且你不能使用 ff:ff:ff:ff:ff:ff 因为那是广播地址。
+#  对于 ethertap 模块，你必须使用 fe:fd:00:00:00:01。可能还有其他限制。
+#  为安全起见，只需使用 b0:c4... 地址。
+#
+# ETHDEV: ethdev 值是你的主机平台上网络接口的名称。
+#  在 UNIX 机器上，你可以通过运行 ifconfig 来获取名称。
+#  在 Windows 机器上，你必须运行 niclist 来获取 ethdev 的名称。
+#  Niclist 源代码在 misc/niclist.c 中，并包含在 Windows 二进制发行版中。
+#  'socket' 模块使用此参数指定用于接收数据包的 UDP 端口和（可选的）要连接的主机。
+#
+# SCRIPT: script 值是可选的，并且是在 bochs 初始化网络接口后执行的脚本的名称。
+#  你可以使用此脚本来配置此网络接口，或启用伪装。
+#  这主要适用于仅在 Bochs 执行期间存在的 tun/tap 设备。网络接口名称作为第一个参数提供给脚本。
+#  'slirp' 模块使用此参数指定配置文件以设置备用 IP 配置或其他特性。
+#  'vnet' 模块也使用此参数指定类似于 slirp 的配置文件，但只有几个设置。
+#
+# BOOTROM: bootrom 值是可选的，并且是要加载的 ROM 镜像的名称。
+#  请注意，此特性仅针对 NE2000 的 PCI 版本实现。
+#  对于 ISA 版本，必须使用 'optromimage[1-4]' 选项之一而不是此选项。
+#
+# 如果你不想连接到任何物理网络，你可以使用以下 'ethmod' 来模拟虚拟网络。
+#   null: 所有数据包都被丢弃，但记录到几个文件中。
+#   vde:  虚拟分布式以太网
+#   vnet: 模拟 ARP, ICMP-echo(ping), DHCP, DNS, FTP 和 TFTP。
+#         虚拟主机使用 192.168.10.1。DHCP 将 192.168.10.15 分配给客户机。
+#         FTP/TFTP 使用 'ethdev' 值作为根目录。TFTP 不覆盖文件，DNS 仅用于服务器和客户端。
+#   socket: 使用外部程序 'bxhub' 连接最多 6 个 Bochs 实例（模拟以太网集线器）。
+#           它提供与 'vnet' 模块相同的服务，并像 'slirp' 一样分配 IP 地址（10.0.2.x）。
+#
+#=======================================================================
+# ne2k: ioaddr=0x300, irq=9, mac=fe:fd:00:00:00:01, ethmod=fbsd, ethdev=en0 #macosx
+# ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:00, ethmod=fbsd, ethdev=xl0
+# ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:00, ethmod=linux, ethdev=eth0
+# ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:01, ethmod=win32, ethdev=MYCARD
+# ne2k: ioaddr=0x300, irq=9, mac=fe:fd:00:00:00:01, ethmod=tap, ethdev=tap0
+# ne2k: ioaddr=0x300, irq=9, mac=fe:fd:00:00:00:01, ethmod=tuntap, ethdev=/dev/net/tun0, script=./tunconfig
+# ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:01, ethmod=null, ethdev=eth0
+# ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:01, ethmod=vde, ethdev="/tmp/vde.ctl"
+# ne2k: ioaddr=0x300, irq=9, mac=b0:c4:20:00:00:01, ethmod=vnet, ethdev="c:/temp"
+# ne2k: mac=b0:c4:20:00:00:01, ethmod=socket, ethdev=40000 # 使用 localhost
+# ne2k: mac=b0:c4:20:00:00:01, ethmod=socket, ethdev=mymachine:40000
+# ne2k: mac=b0:c4:20:00:00:01, ethmod=slirp, script=slirp.conf, bootrom=ne2k_pci.rom
+
+#=======================================================================
+# pcipnic: Bochs/Etherboot 伪 NIC
+#
+# 格式：
+# pcipnic: enabled=1, mac=MACADDR, ethmod=MODULE, ethdev=DEVICE, script=SCRIPT,
+#          bootrom=BOOTROM
+#
+# 伪 NIC 接受相同的语法（对于 mac, ethmod, ethdev, script, bootrom）
+#  并支持与 NE2000 适配器相同的网络模块。
+#=======================================================================
+#pcipnic: enabled=1, mac=b0:c4:20:00:00:00, ethmod=vnet
+
+#=======================================================================
+# e1000: Intel(R) 82540EM 千兆以太网适配器
+#
+# 格式：
+# e1000: card=CARD, enabled=1, mac=MACADDR, ethmod=MODULE, ethdev=DEVICE,
+#        script=SCRIPT, bootrom=BOOTROM
+#
+# E1000 接受相同的语法（对于 card, mac, ethmod, ethdev, script, bootrom）
+#  并支持与 NE2000 适配器相同的网络模块。它还支持最多 4 个设备，使用 card 参数选择。
+#=======================================================================
+#e1000: enabled=1, mac=52:54:00:12:34:56, ethmod=slirp, script=slirp.conf
+
+#=======================================================================
+# USB_UHCI:
+# 此选项控制 USB 根集线器的存在，它是 i440FX PCI 芯片组的一部分。
+#  使用 portX 参数，你可以将设备连接到集线器
+#  （当前支持：'mouse', 'tablet', 'keypad', 'keyboard', 'disk', 'cdrom', 'floppy', 'hub' 和 'printer'）。
+#
+# 如果你将鼠标或 tablet 连接到其中一个端口，Bochs 将鼠标移动数据转发到 USB 设备而不是选定的鼠标类型。
+#  当将 keypad 连接到其中一个端口时，Bochs 将数字小键盘的输入转发到 USB 设备而不是 PS/2 键盘。
+#  如果选择了 keyboard，所有关键事件都发送到 USB 设备。
+#
+# 要将磁盘镜像作为 USB 硬盘连接，你可以使用 'disk' 设备。
+#  使用 optionsX 参数中的 'path' 选项指定镜像的路径，用冒号分隔。
+#  要使用类似于 ATA 磁盘的其他磁盘镜像模式，必须使用语法 'path:mode:filename'（见下文）。
+#
+# 要模拟 USB cdrom，你可以使用 'cdrom' 设备，并且可以使用 optionsX 参数中的 'path' 选项
+#  设置 ISO 镜像的路径或原始设备名称，也用冒号分隔。在运行时配置中提供了插入/弹出媒体的选项。
+#
+# 要模拟 USB 软盘，你可以使用 'floppy' 设备，并且可以使用 optionsX 参数中的 'path' 选项
+#  设置软盘镜像的路径，用冒号分隔。要使用类似于传统软盘的 VVFAT 镜像模式，
+#  必须使用语法 'path:vvfat:directory'（见下文）。在运行时配置中提供了插入/弹出媒体的选项。
+#
+#  设备名称 'hub' 将一个外部集线器（最多 8 个端口，默认值：4）连接到根集线器。
+#  要指定端口数量，你必须在 optionsX 参数中使用 'ports' 选项，值用冒号分隔。
+#  将设备连接到外部集线器端口仅在运行时配置中可用。
+#
+#  设备 'printer' 模拟 HP Deskjet 920C 打印机。
+#  PCL 数据发送到在 optionsX 参数中使用 'file' 选项指定的文件。
+#  如果文件已存在，当前代码将 PCL 代码附加到文件。输出文件可以在运行时更改。
+#
+#  optionsX 参数可用于将特定选项分配给连接到相应 USB 端口的设备。
+#  选项 'speed' 可用于设置设备报告的速度（'low', 'full', 'high' 或 'super'）。
+#  可用的速度选择取决于 HC 和设备两者。选项 'debug' 在连接时打开设备的调试输出。
+#  选项 'pcap' 以 PCAP 格式打开数据包记录。
+#
+#  对于 USB 'disk' 设备，optionsX 参数可用于指定某些镜像模式的替代重做日志文件（journal）。
+#  对于 'vvfat' 模式 USB 磁盘，optionsX 参数可用于指定磁盘大小（范围 128M ... 128G）。
+#  如果未指定大小，则默认为 504M。
+#  对于 USB 'floppy' 设备，optionsX 参数可用于指定要报告的替代设备 ID。
+#  当前仅支持型号 "teac"（可以修复某些客户操作系统中的硬件检测）。
+#  USB 软盘也接受参数 "write_protected"，有效值为 0 和 1 以选择访问模式（默认为 0）。
+#
+#  对于高速或超高速 USB 'disk' 设备，optionsX 参数可以包括
+#  'proto:bbb' 或 'proto:uasp' 参数，指定使用批量仅传输协议（默认）
+#  或 USB 附加 SCSI 协议。如果未给出此类参数，则使用 'bbb' 协议。
+#  不支持 UASP 的客户机即使给定了 'uasp' 属性，也应恢复为 bbb。
+#  （此时仅提供 1 个 LUN）请参阅下面的 usb_ehci: 或 usb_xhci: 部分以获取示例。
+#=======================================================================
+#usb_uhci: enabled=1
+#usb_uhci: port1=mouse, port2=disk, options2="path:usbstick.img"
+#usb_uhci: port1=hub, options1="ports:6, pcap:outfile.pcap"
+#usb_uhci: port2=disk, options2="path:undoable:usbdisk.img, journal:u.redolog"
+#usb_uhci: port2=disk, options2=""path:usbdisk2.img, sect_size:1024"
+#usb_uhci: port2=disk, options2="path:vvfat:vvfat, debug, speed:full"
+#usb_uhci: port2=cdrom, options2="path:image.iso"
+#usb_uhci: port1=printer, options1="file:printdata.bin"
+#usb_uhci: port2=floppy, options2="path:vvfat:diskette, model:teac"
+
+#=======================================================================
+# USB_OHCI:
+# 此选项控制带有 2 端口集线器的 USB OHCI 主机控制器的存在。
+#  portX 参数接受与 UHCI 控制器相同的设备类型和语法（见上文）。optionsX 参数在 OHCI 上也可用。
+#=======================================================================
+#usb_ohci: enabled=1
+#usb_ohci: enabled=1, port1=printer:usbprinter.bin
+
+#=======================================================================
+# USB_EHCI:
+# 此选项控制带有 6 端口集线器的 USB EHCI 主机控制器的存在。
+#  portX 参数接受与 UHCI 控制器相同的设备类型和语法（见上文）。optionsX 参数在 EHCI 上也可用。
+#  HC 将默认为三个 UHCI 伴随控制器，但你可以指定 UHCI 或 OHCI。
+#  每个伴随控制器将平均分配，每个有 2 个端口，前 2 个在第一个伴随控制器上，依此类推。
+#=======================================================================
+#usb_ehci: enabled=1
+#usb_ehci: enabled=1, companion=uhci
+#usb_ehci: enabled=1, companion=ohci
+#usb_ehci: port1=disk, options1="speed:high, path:hdd.img, proto:bbb"
+#usb_ehci: port1=disk, options1="speed:high, path:hdd.img, proto:uasp"
+
+#=======================================================================
+# USB_XHCI:
+# 此选项控制带有默认 4 端口集线器的 USB xHCI 主机控制器的存在。
+#  portX 参数接受与 UHCI 控制器相同的设备类型和语法（见上文）。optionsX 参数在 xHCI 上也可用。
+#
+#  xHCI 模拟允许你设置使用的端口数量，范围为 2 到 10，需要偶数计数。
+#
+#  注意：前半部分端口（4 端口集线器上的端口 1 和 2）是 USB3 only 并支持超高速设备。
+#  后半部分端口（端口 3 和 4）是 USB2 并支持低速、全速或高速设置。
+#  xHCI 还允许使用 model= 参数使用不同的主机控制器。
+#  当前，两个允许的选项是 "uPD720202" 和 "uPD720201"。
+#  第一个默认为 2 个插槽（4 个端口），后一个默认为 4 个插槽（8 个端口）。
+#=======================================================================
+#usb_xhci: enabled=1               # 默认为具有 4 个端口的 uPD720202
+#usb_xhci: enabled=1, n_ports=6    # 默认为具有 6 个端口的 uPD720202
+#usb_xhci: enabled=1, model=uPD720202             # 默认为 4 个端口
+#usb_xhci: enabled=1, model=uPD720202, n_ports=6  # 更改为 6 个端口
+#usb_xhci: enabled=1, model=uPD720201             # 默认为 8 个端口
+#usb_xhci: enabled=1, model=uPD720201, n_ports=10 # 更改为 10 个端口
+#usb_xhci: port1=disk, options1="speed:super, path:hdd.img, proto:bbb"
+#usb_xhci: port1=disk, options1="speed:super, path:hdd.img, proto:uasp"
+#usb_xhci: port3=disk, options3="speed:high, path:hdd.img, proto:uasp"
+
+#=======================================================================
+# USB Debugger（USB 调试器）:
+# 这是用于 Windows 平台的实验性 USB 调试器。
+#  指定一个类型（none, uhci, ohci, ehci, xhci）和一个或多个触发器。
+#  （当前，仅支持 xhci，部分支持 uhci）
+#  触发器：
+#   reset:       在端口重置时中断并加载调试器
+#   enable:      在端口启用时中断并加载调试器
+#   doorbell:    在 xHCI 命令环添加时中断并加载调试器
+#   event:       在 xHCI 事件环添加时中断并加载调试器
+#   data:        在 xHCI 数据环添加时中断并加载调试器
+#   start_frame: 在帧开始时中断并加载调试器（这对于每种控制器类型都不同）
+#   non_exist:   在对不存在的端口访问时中断并加载调试器
+#  （实验性的，正在开发中）
+#=======================================================================
+#usb_debug: type=xhci, reset=1, enable=1, start_frame=1, doorbell=1, event=1, data=1, non_exist=1
+
+#=======================================================================
+# PCIDEV:
+# PCI 主机设备映射
+# 警告：此 Bochs 特性尚未维护，可能会失败。
+#=======================================================================
+#pcidev: vendor=0x1234, device=0x5678
+
+#=======================================================================
+# GDBSTUB:
+# 启用 GDB stub。有关详细信息，请参阅用户文档。
+# 默认值为 enabled=0。
+# 警告：此 Bochs 特性尚未维护，可能会失败。
+#=======================================================================
+#gdbstub: enabled=0, port=1234, text_base=0, data_base=0, bss_base=0
+
+#=======================================================================
+# MAGIC_BREAK（魔法断点）:
+# 当使用调试器时，这启用"魔法断点"特性。
+#  无用的 cpu 指令 XCHG %REGW, %REGW 导致 Bochs 进入调试器模式。
+#  这对于软件开发可能有用。
+#
+# 你可以一次指定多个：
+#
+# cx dx bx sp bp si di
+#
+# 示例：在执行 "XCHGW %DI, %DI" 或 "XCHG %SP, %SP" 时中断
+#   magic_break: enabled=1 di sp
+#
+# 如果未指定任何内容，将使用默认值：XCHGW %BX, %BX
+#   magic_break: enabled=1
+#
+# 注意：Windows XP ntldr 可能会导致 XCHGW %BX, %BX 出现问题
+#=======================================================================
+# magic_break: enabled=1
+
+#=======================================================================
+# DEBUG_SYMBOLS（调试符号）:
+# 这从指定文件加载符号，以供 Bochs 内部调试器使用。
+#  符号被加载到全局上下文中。这相当于在启动时发出 ldsym 调试器命令。
+#
+# 示例：
+#   debug_symbols: file="kernel.sym"
+#   debug_symbols: file="kernel.sym", offset=0x80000000
+#=======================================================================
+#debug_symbols: file="kernel.sym"
+
+#print_timestamps: enabled=1
+
+#=======================================================================
+# PORT_E9_HACK（端口E9黑客）:
+# 0xE9 端口在正常的 ISA 架构中不存在。但是，我们在这里定义了一个约定，
+#  在运行 Bochs 的系统控制台上显示写入它的任何内容。
+#  这个想法是为了在编写 BIOS 或 OS 代码时非常早地提供调试输出，
+#  而不必费心设置串行端口等。从端口 0xE9 读取将返回 0xe9 以让你知道该特性是否可用。
+#  除非你有理由使用它，否则请将其保留为 0。通过启用 'all_rings' 选项，
+#  你可以从 ring3 利用端口 e9 黑客。
+#
+# 示例：
+#   port_e9_hack: enabled=1
+#   port_e9_hack: enabled=1, all_rings=1
+#=======================================================================
+#port_e9_hack: enabled=1, all_rings=1
+
+#=======================================================================
+# IODEBUG:
+# 到 Bochs 调试器插件的 I/O 接口允许在 Bochs 内部运行的代码
+#  监视内存范围、跟踪单个指令并在执行期间观察寄存器值。
+#  通过启用 'all_rings' 选项，你可以从 ring3 利用 iodebug 端口。
+#  有关更多信息，请参阅"高级调试器用法"文档。
+#
+# 示例：
+#   iodebug: all_rings=1
+#=======================================================================
+#iodebug: all_rings=1
+
+#=======================================================================
+# fullscreen（全屏）: 仅在 AMIGA 上实现
+#             请求 Bochs 占据整个屏幕而不是一个窗口。
+#
+# 示例：
+#   fullscreen: enabled=0
+#   fullscreen: enabled=1
+#=======================================================================
+#fullscreen: enabled=0
+#screenmode: name="sample"
+
+#=======================================================================
+# 对于 Macintosh，使用以下示例中的路径名样式。
+#
+# vgaromimage: :bios:VGABIOS-elpin-2.40
+# romimage: file=:bios:BIOS-bochs-latest, address=0xf0000
+# floppya: 1_44=[fd:], status=inserted
+#=======================================================================
+
+#=======================================================================
+# MEGS（内存兆字节）
+# 设置你想要模拟的物理内存的兆字节数。
+# 默认是 32MB，大多数操作系统不需要超过这个值。
+# 支持的最大内存量为 2048Mb。
+# 'MEGS' 选项已弃用。请使用 'MEMORY' 选项。
+#=======================================================================
+#megs: 256
+#megs: 128
+#megs: 64
+#megs: 32
+#megs: 16
+#megs: 8

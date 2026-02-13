@@ -1,5 +1,5 @@
 #!/bin/bash
-@echo off
+
 name=""
 img=""
 dbg=""
@@ -105,22 +105,26 @@ nasm_and_img(){
     nasm -i gb2312 src/kernel/test.asm $nasm_fat_arg -o build/test.bin -I src/boot -I src/kernel
     testsize=$(wc -c < build/test.bin)
     rm build/*
+    echo "内核大小:${kernelsize} 字节"
+    echo "视频大小:${videosize} 字节"
+    echo "定时器大小:${timersize} 字节"    
+    echo "测试大小:${testsize} 字节"
+
     nasmFileSize_parameter="-DKERNEL_SIZE=$kernelsize -DVIDEO_SIZE=$videosize -DTIMER_SIZE=$timersize -DTEST_SIZE=$testsize -I src/boot -I src/kernel"
     for file in src/kernel/*.asm; do
         file_name=$(basename "$file" .asm)
         
          nasm  "$file" $nasm_fat_arg $nasmFileSize_parameter -o build/"$file_name".bin 
-         nasm -f bin -l lst/"$file_name".lst   "$file" $nasm_fat_arg $nasmFileSize_parameter  
+         nasm -f bin -l lst/"$file_name".lst   "$file" -o lst/"$file_name" $nasm_fat_arg $nasmFileSize_parameter  
     done
 
 
     nasm  src/boot/"${name}".asm $nasm_fat_arg -o build/"${name}".bin  $nasmFileSize_parameter
-    nasm -f bin -l lst/"${name}".lst   src/boot/"${name}".asm $nasm_fat_arg $nasmFileSize_parameter  
+    nasm -f bin -l lst/"${name}".lst   src/boot/"${name}".asm -o lst/"${name}" $nasm_fat_arg $nasmFileSize_parameter  
     output=$(nasm  src/boot/loader.asm $nasm_fat_arg $nasmFileSize_parameter -o build/loader.bin  2>&1 >/dev/null)
-    nasm -f bin -l lst/loader.lst   src/boot/loader.asm $nasm_fat_arg $nasmFileSize_parameter   > /dev/null 2>&1
-    
+    nasm -f bin -l lst/loader.lst   src/boot/loader.asm -o lst/loader $nasm_fat_arg $nasmFileSize_parameter   > /dev/null 2>&1
     read -r _ _ kernel timer video test sysbuf _ <<< "$output"
-
+    find lst/ -type f ! -name "*.lst" -delete
     # 转换为十六进制（可加上 0x 前缀）
     kernel_add=$(printf "0x%X" "$kernel")
     timer_add=$(printf "0x%X" "$timer")
@@ -140,7 +144,7 @@ nasm_and_img(){
     }|column -t -s $'.'
     if  $create_img  ; then
         dd if=/dev/zero of=disk_images/"${img}".img bs=512 count=$floppy_count > /dev/null 2>&1
-        echo "创建软盘镜像:     "${img}".img "
+        echo "创建软盘镜像: "${img}".img "
     else 
         echo "跳过生成镜像文件 使用"${img}".img 写入 "${name}".img"  
     fi

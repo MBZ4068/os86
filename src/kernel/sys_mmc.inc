@@ -1,55 +1,90 @@
 
-;kernel_setoff å†…æ ¸åŠ è½½åç§»åœ°å€
-;han_setoff æ±‰æ˜¾ç¼“å­˜åŒºåç§»åœ°å€
-;irq_setoff ä¸­æ–­åŠ è½½åç§»åœ°å€   
-;sysbuf_setoff ç³»ç»Ÿç¼“å­˜åŒºåç§»åœ°å€
+;kernel_setoff ÄÚºË¼ÓÔØÆ«ÒÆµØÖ·
+;han_setoff ººÏÔ»º´æÇøÆ«ÒÆµØÖ·
+;irq_setoff ÖĞ¶Ï¼ÓÔØÆ«ÒÆµØÖ·   
+;sysbuf_setoff ÏµÍ³»º´æÇøÆ«ÒÆµØÖ·
 
-;å„æ¨¡å—æ ˆé¡¶ä¸æ ˆåº•åœ°å€å®šä¹‰
-;kernel_stack_top å†…æ ¸æ ˆé¡¶
-;kernel_stack_bottom å†…æ ¸æ ˆåº•
-;clock_stack_top æ—¶é’Ÿæ ˆé¡¶
-;clock_stack_bottom æ—¶é’Ÿæ ˆåº•
-;keyboard_stack_top é”®ç›˜æ ˆé¡¶
-;keyboard_stack_bottom é”®ç›˜æ ˆåº•
-;disk_stack_top ç£ç›˜æ ˆé¡¶
-;disk_stack_bottom ç£ç›˜æ ˆåº•
-;video_stack_top è§†é¢‘æ ˆé¡¶
-;video_stack_bottom è§†é¢‘æ ˆåº•
-;otherirq_stack_top å…¶ä»–ä¸­æ–­æ ˆé¡¶
-;otherirq_stack_bottom å…¶ä»–ä¸­æ–­æ ˆåº•
-;app_stack_top åº”ç”¨ç¨‹åºæ ˆé¡¶
-;app_stack_bottom åº”ç”¨ç¨‹åºæ ˆåº•
+;¸÷Ä£¿éÕ»¶¥ÓëÕ»µ×µØÖ·¶¨Òå
+;kernel_stack_top ÄÚºËÕ»¶¥
+;kernel_stack_bottom ÄÚºËÕ»µ×
+;clock_stack_top Ê±ÖÓÕ»¶¥
+;clock_stack_bottom Ê±ÖÓÕ»µ×
+;keyboard_stack_top ¼üÅÌÕ»¶¥
+;keyboard_stack_bottom ¼üÅÌÕ»µ×
+;disk_stack_top ´ÅÅÌÕ»¶¥
+;disk_stack_bottom ´ÅÅÌÕ»µ×
+;video_stack_top ÊÓÆµÕ»¶¥
+;video_stack_bottom ÊÓÆµÕ»µ×
+;otherirq_stack_top ÆäËûÖĞ¶ÏÕ»¶¥
+;otherirq_stack_bottom ÆäËûÖĞ¶ÏÕ»µ×
+;app_stack_top Ó¦ÓÃ³ÌĞòÕ»¶¥
+;app_stack_bottom Ó¦ÓÃ³ÌĞòÕ»µ×
+
+%ifndef KERNEL_SIZE
+    %define  KERNEL_SIZE  0x400  ; Ä¬ÈÏÖµ
+%endif
+
+%ifndef VIDEO_SIZE
+    %define  VIDEO_SIZE  0x400   ; Ä¬ÈÏÖµ
+%endif
+
+%ifndef TIMER_SIZE
+    %define  TIMER_SIZE  0x400  ; Ä¬ÈÏÖµ
+%endif
+
+%ifndef TEST_SIZE
+    %define  TEST_SIZE  0x400   ; Ä¬ÈÏÖµ
+%endif
 
 
 
 
 
-;fatè¡¨å‚¨å­˜ä½ç½®
+
+
+
+
+
+;fat±í´¢´æÎ»ÖÃ
 fat_setoff    equ 0x500
-;å†…æ ¸åŠ è½½åç§»åœ°å€
-kernel_setoff equ 0x5002
-;æ±‰æ˜¾ç¼“å­˜åŒºåç§»åœ°å€
-han_setoff    equ 0x7002
-;ä¸­æ–­åŠ è½½åç§»åœ°å€
-irq_setoff    equ 0xa002
-;ç³»ç»Ÿç¼“å­˜åŒºåç§»åœ°å€
-sysbuf_setoff equ 0xe002
+;ÄÚºËÕ»¶¥
+fat_bottom      equ fat_setoff + 0x1200                     ;4.5kb 
+;ÄÚºËÕ»µ×                   
+kernel_stack_bottom   equ fat_bottom  + 0x1000+2            ;4kb
+;Ê±ÖÓÕ»µ× 1kb
+timer_stack_bottom    equ kernel_stack_bottom+0x400 +2
+;¼üÅÌÕ»µ× 512kb
+keyboard_stack_bottom equ timer_stack_bottom +0x200 +2
+;´ÅÅÌÕ»µ×            ;2kb
+disk_stack_bottom     equ kernel_stack_bottom+0x800 +2
+;ÊÓÆµÕ»µ×            ;1kb
+video_stack_bottom    equ disk_stack_bottom+0x400 +2
+;ÆäËûÖĞ¶ÏÕ»µ×
+otherirq_stack_bottom equ video_stack_bottom+0x400  +2       ;1kb
+;Ó¦ÓÃ³ÌĞòÕ»µ×
+app_stack_bottom      equ otherirq_stack_bottom+0xc00  +2    ;3kb
 
-;å†…æ ¸æ ˆé¡¶
-kernel_stack_top      equ fat_setoff + 0x1200              ;4.5kb 
-;å†…æ ¸æ ˆåº•
-kernel_stack_bottom   equ kernel_stack_top + 0x1000             ;4kb
-;æ—¶é’Ÿæ ˆåº• 1kb
-clock_stack_bottom    equ kernel_stack_bottom+0x400
-;é”®ç›˜æ ˆåº• 512kb
-keyboard_stack_bottom equ clock_stack_bottom +0x200
-;ç£ç›˜æ ˆåº•         ;2kb
-disk_stack_bottom     equ kernel_stack_bottom+0x800
-;è§†é¢‘æ ˆåº•            ;1kb
-video_stack_bottom    equ disk_stack_bottom+0x400 
-;å…¶ä»–ä¸­æ–­æ ˆåº•
-otherirq_stack_bottom equ video_stack_bottom+0x400         ;1kb
-;åº”ç”¨ç¨‹åºæ ˆåº•
-app_stack_bottom      equ otherirq_stack_bottom+0xc00      ;3kb
+;ººÏÔ»º´æÇøÆ«ÒÆµØÖ·
+han_setoff  equ app_stack_bottom+2
+;ÄÚºË¼ÓÔØÆ«ÒÆµØÖ·
+kernel_setoff   equ han_setoff+0x3000+2
+;ÖĞ¶Ï¼ÓÔØÆ«ÒÆµØÖ·
+video_setoff    equ kernel_setoff + KERNEL_SIZE+2
+timer_setoff    equ video_setoff + VIDEO_SIZE+2
+test_setoff     equ timer_setoff + TIMER_SIZE+2
+;ÏµÍ³»º´æÇøÆ«ÒÆµØÖ·
+sysbuf_setoff equ test_setoff + TEST_SIZE+2
 
+loader_bottom       equ 0x1000
+loader_start_top    equ 0xf7ff
+loader_start_bottom equ 0xfffe
+
+timer_int equ 0x8
+video_int equ 0x60
+
+%assign _ks kernel_setoff
+%assign _vs video_setoff
+%assign _ts timer_setoff
+%assign _tes test_setoff
+%assign _sbs sysbuf_setoff
 

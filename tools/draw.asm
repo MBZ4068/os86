@@ -19,7 +19,7 @@ Calculate_Off:
     mov ax,320
     sub ax, picture_width
     mov bx, 2
-    div bx         ;ax å•† ï¼Œdx ä½™æ•°  æ³¨æ„ ä½™æ•° ä¸è¦
+    div bx         ;ax ÉÌ £¬dx ÓàÊı  ×¢Òâ ÓàÊı ²»Òª
     mov word [width_off],AX
     xor dx,dx
     mov ax,200
@@ -40,7 +40,7 @@ Length_Loop:
     mov word [remain_width],ax
     mov cx, word [width_off]
     Width_Loop:
-        cmp word [remain_width], 0              ; åˆ¤æ–­æ¢è¡Œ
+        cmp word [remain_width], 0              ; ÅĞ¶Ï»»ĞĞ
         jz Next_Line 
         dec word [remain_width]          
 
@@ -62,8 +62,8 @@ Draw_Over:
     jmp $
 
 
-picture_width equ 297    ;å›¾ç‰‡å®½åº¦
-picture_length equ 81   ;å›¾ç‰‡é•¿åº¦
+picture_width equ 297    ;Í¼Æ¬¿í¶È
+picture_length equ 81   ;Í¼Æ¬³¤¶È
 width_off dw 0
 legth_off db 0
 

@@ -1,7 +1,7 @@
     %ifdef DISK_1.44M
-    ; 1.44MB è½¯ç›˜å‚æ•°
-    %DEFINE RooT_DIR_SECTORS           14     ;æ ¹æ–‡ä»¶æ‰‡åŒºæ•°  è®¡ç®—å¾—æ¥ (æ ¹æ–‡ä»¶å®¹çº³ç›®å½•æ ‘*32+511)/512 511æ˜¯ä¸ºäº†ä½™å‡ºæ¥çš„æ•°å€¼èƒ½åŒ…å«è¿›åŽ»
-    %DEFINE SECTOR_NUMOF_ROOT_DIR_START  19    ;æ ¹æ–‡ä»¶å¼€å§‹æ‰‡åŒº
+    ; 1.44MB ÈíÅÌ²ÎÊý
+    %DEFINE RooT_DIR_SECTORS           14     ;¸ùÎÄ¼þÉÈÇøÊý  ¼ÆËãµÃÀ´ (¸ùÎÄ¼þÈÝÄÉÄ¿Â¼Ê÷*32+511)/512 511ÊÇÎªÁËÓà³öÀ´µÄÊýÖµÄÜ°üº¬½øÈ¥
+    %DEFINE SECTOR_NUMOF_ROOT_DIR_START  19    ;¸ùÎÄ¼þ¿ªÊ¼ÉÈÇø
     %define BYTES_PER_SECTOR    512
     %define SECTORS_PER_CLUSTER 1
     %define RESERVED_SECTORS    1
@@ -13,9 +13,9 @@
     %define SECTORS_PER_TRACK   18
 
 %elifdef DISK_1.2M
-    ; 1.2MB è½¯ç›˜å‚æ•°
-    %DEFINE RooT_DIR_SECTORS           14     ;æ ¹æ–‡ä»¶æ‰‡åŒºæ•°  è®¡ç®—å¾—æ¥ (æ ¹æ–‡ä»¶å®¹çº³ç›®å½•æ ‘*32+511)/512 511æ˜¯ä¸ºäº†ä½™å‡ºæ¥çš„æ•°å€¼èƒ½åŒ…å«è¿›åŽ»
-    %DEFINE SECTOR_NUMOF_ROOT_DIR_START 15    ;æ ¹æ–‡ä»¶å¼€å§‹æ‰‡åŒº
+    ; 1.2MB ÈíÅÌ²ÎÊý
+    %DEFINE RooT_DIR_SECTORS           14     ;¸ùÎÄ¼þÉÈÇøÊý  ¼ÆËãµÃÀ´ (¸ùÎÄ¼þÈÝÄÉÄ¿Â¼Ê÷*32+511)/512 511ÊÇÎªÁËÓà³öÀ´µÄÊýÖµÄÜ°üº¬½øÈ¥
+    %DEFINE SECTOR_NUMOF_ROOT_DIR_START 15    ;¸ùÎÄ¼þ¿ªÊ¼ÉÈÇø
     %define BYTES_PER_SECTOR    512
     %define SECTORS_PER_CLUSTER 1
     %define RESERVED_SECTORS    1
@@ -27,9 +27,9 @@
     %define SECTORS_PER_TRACK   15
 
 %elifdef DISK_720K
-    ; 720KB è½¯ç›˜å‚æ•°
-    %DEFINE RooT_DIR_SECTORS           14      ;æ ¹æ–‡ä»¶æ‰‡åŒºæ•°  è®¡ç®—å¾—æ¥ (æ ¹æ–‡ä»¶å®¹çº³ç›®å½•æ ‘*32+511)/512 511æ˜¯ä¸ºäº†ä½™å‡ºæ¥çš„æ•°å€¼èƒ½åŒ…å«è¿›åŽ»
-    %DEFINE SECTOR_NUMOF_ROOT_DIR_START  7    ;æ ¹æ–‡ä»¶å¼€å§‹æ‰‡åŒº
+    ; 720KB ÈíÅÌ²ÎÊý
+    %DEFINE RooT_DIR_SECTORS           14      ;¸ùÎÄ¼þÉÈÇøÊý  ¼ÆËãµÃÀ´ (¸ùÎÄ¼þÈÝÄÉÄ¿Â¼Ê÷*32+511)/512 511ÊÇÎªÁËÓà³öÀ´µÄÊýÖµÄÜ°üº¬½øÈ¥
+    %DEFINE SECTOR_NUMOF_ROOT_DIR_START  7    ;¸ùÎÄ¼þ¿ªÊ¼ÉÈÇø
     %define BYTES_PER_SECTOR    512
     %define SECTORS_PER_CLUSTER 2
     %define RESERVED_SECTORS    1
@@ -40,55 +40,55 @@
     %define SECTORS_PER_FAT     3
     %define SECTORS_PER_TRACK   9
 %elifdef DISK_360K
-    %DEFINE RooT_DIR_SECTORS           7      ;æ ¹æ–‡ä»¶æ‰‡åŒºæ•°  è®¡ç®—å¾—æ¥ (æ ¹æ–‡ä»¶å®¹çº³ç›®å½•æ ‘*32+511)/512 511æ˜¯ä¸ºäº†ä½™å‡ºæ¥çš„æ•°å€¼èƒ½åŒ…å«è¿›åŽ»
-    %DEFINE SECTOR_NUMOF_ROOT_DIR_START  5    ;æ ¹æ–‡ä»¶å¼€å§‹æ‰‡åŒº
-    %define BYTES_PER_SECTOR    512  ;æ¯æ‰‡åŒºå­—èŠ‚
-    %define SECTORS_PER_CLUSTER 2    ;æ¯ç°‡æ‰‡åŒºæ•°
-    %define RESERVED_SECTORS    1    ;ä¿ç•™æ‰‡åŒº   å¼•å¯¼æ–‡ä»¶çš„æ‰‡åŒº
-    %define NUM_FATS            2    ;fatè¡¨ä»½æ•°
-    %define ROOT_ENTRIES        112  ;æ ¹æ–‡ä»¶å®¹çº³ç›®å½•æ•°
-    %define TOTAL_SECTORS       720  ;æ€»æ‰‡åŒºæ•°
-    %define MEDIA_DESCRIPTOR    0xF0 ; ç”¨äºŽå‘æ“ä½œç³»ç»Ÿæ ‡è¯†ç£ç›˜çš„ç±»åž‹å’Œæ ¼å¼ã€‚xF8 - ç¡¬ç›˜0xF0 - é«˜å¯†åº¦ è½¯ç›˜ 0xF9 - åŒå¯†åº¦ è½¯ç›˜
-    %define SECTORS_PER_FAT     2    ;æ¯ä»½fatè¡¨å çš„å¤§å°
-    %define SECTORS_PER_TRACK   9    ;æ¯ä¸ªç£é“çš„æ‰‡åŒºæ•°
+    %DEFINE RooT_DIR_SECTORS           7      ;¸ùÎÄ¼þÉÈÇøÊý  ¼ÆËãµÃÀ´ (¸ùÎÄ¼þÈÝÄÉÄ¿Â¼Ê÷*32+511)/512 511ÊÇÎªÁËÓà³öÀ´µÄÊýÖµÄÜ°üº¬½øÈ¥
+    %DEFINE SECTOR_NUMOF_ROOT_DIR_START  5    ;¸ùÎÄ¼þ¿ªÊ¼ÉÈÇø
+    %define BYTES_PER_SECTOR    512  ;Ã¿ÉÈÇø×Ö½Ú
+    %define SECTORS_PER_CLUSTER 2    ;Ã¿´ØÉÈÇøÊý
+    %define RESERVED_SECTORS    1    ;±£ÁôÉÈÇø   Òýµ¼ÎÄ¼þµÄÉÈÇø
+    %define NUM_FATS            2    ;fat±í·ÝÊý
+    %define ROOT_ENTRIES        112  ;¸ùÎÄ¼þÈÝÄÉÄ¿Â¼Êý
+    %define TOTAL_SECTORS       720  ;×ÜÉÈÇøÊý
+    %define MEDIA_DESCRIPTOR    0xF0 ; ÓÃÓÚÏò²Ù×÷ÏµÍ³±êÊ¶´ÅÅÌµÄÀàÐÍºÍ¸ñÊ½¡£xF8 - Ó²ÅÌ0xF0 - ¸ßÃÜ¶È ÈíÅÌ 0xF9 - Ë«ÃÜ¶È ÈíÅÌ
+    %define SECTORS_PER_FAT     2    ;Ã¿·Ýfat±íÕ¼µÄ´óÐ¡
+    %define SECTORS_PER_TRACK   9    ;Ã¿¸ö´ÅµÀµÄÉÈÇøÊý
 
 %else
-    ; é»˜è®¤ä½¿ç”¨ 360k
+    ; Ä¬ÈÏÊ¹ÓÃ 360k
     
-    %DEFINE RooT_DIR_SECTORS           7      ;æ ¹æ–‡ä»¶æ‰‡åŒºæ•°  è®¡ç®—å¾—æ¥ (æ ¹æ–‡ä»¶å®¹çº³ç›®å½•æ ‘*32+511)/512 511æ˜¯ä¸ºäº†ä½™å‡ºæ¥çš„æ•°å€¼èƒ½åŒ…å«è¿›åŽ»
-    %DEFINE SECTOR_NUMOF_ROOT_DIR_START  5    ;æ ¹æ–‡ä»¶å¼€å§‹æ‰‡åŒº
-    %define BYTES_PER_SECTOR    512  ;æ¯æ‰‡åŒºå­—èŠ‚
-    %define SECTORS_PER_CLUSTER 2    ;æ¯ç°‡æ‰‡åŒºæ•°
-    %define RESERVED_SECTORS    1    ;ä¿ç•™æ‰‡åŒº   å¼•å¯¼æ–‡ä»¶çš„æ‰‡åŒº
-    %define NUM_FATS            2    ;fatè¡¨ä»½æ•°
-    %define ROOT_ENTRIES        112  ;æ ¹æ–‡ä»¶å®¹çº³ç›®å½•æ•°
-    %define TOTAL_SECTORS       720  ;æ€»æ‰‡åŒºæ•°
-    %define MEDIA_DESCRIPTOR    0xF0 ; ç”¨äºŽå‘æ“ä½œç³»ç»Ÿæ ‡è¯†ç£ç›˜çš„ç±»åž‹å’Œæ ¼å¼ã€‚xF8 - ç¡¬ç›˜0xF0 - é«˜å¯†åº¦ è½¯ç›˜ 0xF9 - åŒå¯†åº¦ è½¯ç›˜
-    %define SECTORS_PER_FAT     2    ;æ¯ä»½fatè¡¨å çš„å¤§å°
-    %define SECTORS_PER_TRACK   9    ;æ¯ä¸ªç£é“çš„æ‰‡åŒºæ•°             
+    %DEFINE RooT_DIR_SECTORS           7      ;¸ùÎÄ¼þÉÈÇøÊý  ¼ÆËãµÃÀ´ (¸ùÎÄ¼þÈÝÄÉÄ¿Â¼Ê÷*32+511)/512 511ÊÇÎªÁËÓà³öÀ´µÄÊýÖµÄÜ°üº¬½øÈ¥
+    %DEFINE SECTOR_NUMOF_ROOT_DIR_START  5    ;¸ùÎÄ¼þ¿ªÊ¼ÉÈÇø
+    %define BYTES_PER_SECTOR    512  ;Ã¿ÉÈÇø×Ö½Ú
+    %define SECTORS_PER_CLUSTER 2    ;Ã¿´ØÉÈÇøÊý
+    %define RESERVED_SECTORS    1    ;±£ÁôÉÈÇø   Òýµ¼ÎÄ¼þµÄÉÈÇø
+    %define NUM_FATS            2    ;fat±í·ÝÊý
+    %define ROOT_ENTRIES        112  ;¸ùÎÄ¼þÈÝÄÉÄ¿Â¼Êý
+    %define TOTAL_SECTORS       720  ;×ÜÉÈÇøÊý
+    %define MEDIA_DESCRIPTOR    0xF0 ; ÓÃÓÚÏò²Ù×÷ÏµÍ³±êÊ¶´ÅÅÌµÄÀàÐÍºÍ¸ñÊ½¡£xF8 - Ó²ÅÌ0xF0 - ¸ßÃÜ¶È ÈíÅÌ 0xF9 - Ë«ÃÜ¶È ÈíÅÌ
+    %define SECTORS_PER_FAT     2    ;Ã¿·Ýfat±íÕ¼µÄ´óÐ¡
+    %define SECTORS_PER_TRACK   9    ;Ã¿¸ö´ÅµÀµÄÉÈÇøÊý             
 
 %endif
 
-RootDirSectors          equ RooT_DIR_SECTORS            ;æ ¹æ–‡ä»¶æ‰‡åŒºæ•°  è®¡ç®—å¾—æ¥ (æ ¹æ–‡ä»¶å®¹çº³ç›®å½•æ ‘*32+511)/512 511æ˜¯ä¸ºäº†ä½™å‡ºæ¥çš„æ•°å€¼èƒ½åŒ…å«è¿›åŽ»
-SectorNumOfRootDirStart equ SECTOR_NUMOF_ROOT_DIR_START ;æ ¹æ–‡ä»¶å¼€å§‹æ‰‡åŒº
-SectorNumOfFAT1Start    equ 1                           ;fatè¡¨å¼€å§‹æ‰‡åŒº
+RootDirSectors          equ RooT_DIR_SECTORS            ;¸ùÎÄ¼þÉÈÇøÊý  ¼ÆËãµÃÀ´ (¸ùÎÄ¼þÈÝÄÉÄ¿Â¼Ê÷*32+511)/512 511ÊÇÎªÁËÓà³öÀ´µÄÊýÖµÄÜ°üº¬½øÈ¥
+SectorNumOfRootDirStart equ SECTOR_NUMOF_ROOT_DIR_START ;¸ùÎÄ¼þ¿ªÊ¼ÉÈÇø
+SectorNumOfFAT1Start    equ 1                           ;fat±í¿ªÊ¼ÉÈÇø
 
     BS_OEMName      db 'COMIBoot'
     BPB_BytesPerSec dw BYTES_PER_SECTOR
-    BPB_SecPerClus  db SECTORS_PER_CLUSTER ;æ¯ç°‡æ‰‡åŒºæ•°
-    BPB_RsvdSecCnt  dw RESERVED_SECTORS    ;ä¿ç•™æ‰‡åŒºæ•°
-    BPB_NumFATs     db NUM_FATS            ;fatè¡¨ä»½æ•°
-    BPB_RootEntCnt  dw ROOT_ENTRIES        ;æ ¹æ–‡ä»¶å®¹çº³ç›®å½•æ•°
-    BPB_TotSec16    dw TOTAL_SECTORS       ;æ€»æ‰‡åŒºæ•°
+    BPB_SecPerClus  db SECTORS_PER_CLUSTER ;Ã¿´ØÉÈÇøÊý
+    BPB_RsvdSecCnt  dw RESERVED_SECTORS    ;±£ÁôÉÈÇøÊý
+    BPB_NumFATs     db NUM_FATS            ;fat±í·ÝÊý
+    BPB_RootEntCnt  dw ROOT_ENTRIES        ;¸ùÎÄ¼þÈÝÄÉÄ¿Â¼Êý
+    BPB_TotSec16    dw TOTAL_SECTORS       ;×ÜÉÈÇøÊý
     BPB_Media       db MEDIA_DESCRIPTOR
     BPB_FATSz16     dw SECTORS_PER_FAT
-    BPB_SecPerTrk   dw SECTORS_PER_TRACK   ;æ¯ä¸ªç£é“çš„æ‰‡åŒºæ•°
+    BPB_SecPerTrk   dw SECTORS_PER_TRACK   ;Ã¿¸ö´ÅµÀµÄÉÈÇøÊý
     BPB_NumHeads    dw 2
     BPB_hiddSec     dd 0
     BPB_TotSec32    dd 0
-    BS_DrvNum       db 0                   ;int 13hé©±åŠ¨å· 0æ˜¯è½¯ç›˜
+    BS_DrvNum       db 0                   ;int 13hÇý¶¯ºÅ 0ÊÇÈíÅÌ
     BS_Reserved1    db 0
     BS_BootSig      db 29h
     BS_VolID        dd 0
-    BS_VolLab       db 'boot loader'       ;å·æ ‡
-    BS_FileSysType  db 'FAT12   '          ;æ–‡ä»¶ç±»åž‹
+    BS_VolLab       db 'boot loader'       ;¾í±ê
+    BS_FileSysType  db 'FAT12   '          ;ÎÄ¼þÀàÐÍ
