@@ -25,31 +25,45 @@ print_help(){
 }
 
 jiazai_loader(){
-
-    ssh arch_root << EOF
-    rm -f ~/win/os/*
-    exit
-EOF
-
-    scp disk_images/"${img}".img arch_root:~/win/os
-    for file in build/*; do
-        if [[ "$(basename "$file")" == "boot.bin" ]]; then
-            continue
-        fi
-        file_name=$(basename "$file")
-        scp build/"$file_name" arch_root:~/win/os
-    done
-
-    ssh arch_root << EOF
-    mount ~/win/os/"${img}".img ~/win/tmp_mount -t vfat -o loop
-    cp ~/win/os/loader.bin  ~/win/tmp_mount
-
-    cp ~/win/os/*.bin  ~/win/tmp_mount
+####wsl的加载文件到镜像
+    password_r="/mnt/d/os86/password"
+    wsl << EOF
+    #清理wsl目录文件
+    cat "$password_r" | sudo -S mount /mnt/d/os86/disk_images/boot.img ~/tmp_mount -t vfat -o loop > /dev/null 2>&1
+    sudo cp ./build/* ~/tmp_mount 
     sync
-    umount ~/win/tmp_mount
-    exit 
+    sudo umount ~/tmp_mount
+    echo "loader文件已加载到镜像中"
+    exit
+
 EOF
-    scp arch_root:~/win/os/"${img}".img disk_images/"${img}".img
+
+#####arch的加载文件到镜像
+#     ssh arch_root << EOF
+#     rm -f ~/win/os/*
+#     exit
+# EOF
+
+#     scp disk_images/"${img}".img arch_root:~/win/os
+#     for file in build/*; do
+#         if [[ "$(basename "$file")" == "boot.bin" ]]; then
+#             continue
+#         fi
+#         file_name=$(basename "$file")
+#         scp build/"$file_name" arch_root:~/win/os
+#     done
+
+#     ssh arch_root << EOF
+#     mount ~/win/os/"${img}".img ~/win/tmp_mount -t vfat -o loop
+#     cp ~/win/os/loader.bin  ~/win/tmp_mount
+
+#     cp ~/win/os/*.bin  ~/win/tmp_mount
+#     sync
+#     umount ~/win/tmp_mount
+#     exit 
+# EOF
+#     scp arch_root:~/win/os/"${img}".img disk_images/"${img}".img
+
 
 }
 name_proc(){
@@ -77,24 +91,61 @@ nasm_and_img(){
     if [[ "$img" == "" ]]; then
         img="$name"
     fi
+    #echo "当前 "${nasm_fat_arg}""
 
+    nasm -i gb2312 src/kernel/kernel.asm $nasm_fat_arg -o build/kernel.bin -I src/boot -I src/kernel
+    kernelsize=$(wc -c < build/kernel.bin)
+
+    nasm -i gb2312 src/kernel/video.asm $nasm_fat_arg -o build/video.bin -I src/boot -I src/kernel
+    videosize=$(wc -c < build/video.bin)
+
+    nasm -i gb2312 src/kernel/timer.asm $nasm_fat_arg -o build/timer.bin -I src/boot -I src/kernel
+    timersize=$(wc -c < build/timer.bin)
+
+    nasm -i gb2312 src/kernel/test.asm $nasm_fat_arg -o build/test.bin -I src/boot -I src/kernel
+    testsize=$(wc -c < build/test.bin)
+    rm build/*
+    nasmFileSize_parameter="-DKERNEL_SIZE=$kernelsize -DVIDEO_SIZE=$videosize -DTIMER_SIZE=$timersize -DTEST_SIZE=$testsize -I src/boot -I src/kernel"
     for file in src/kernel/*.asm; do
         file_name=$(basename "$file" .asm)
-        nasm -i gb2312 "$file" $nasm_fat_arg -o build/"$file_name".bin -I src/boot -I src/kernel
-
+        
+         nasm  "$file" $nasm_fat_arg $nasmFileSize_parameter -o build/"$file_name".bin 
+         nasm -f bin -l lst/"$file_name".lst   "$file" $nasm_fat_arg $nasmFileSize_parameter  
     done
 
-    nasm -i gb2312 src/boot/"${name}".asm $nasm_fat_arg -o build/"${name}".bin -I src/boot -I src/kernel
-    nasm -i gb2312 src/boot/loader.asm $nasm_fat_arg -o build/loader.bin -I src/boot -I src/kernel
-    echo "当前 "${nasm_fat_arg}""
+
+    nasm  src/boot/"${name}".asm $nasm_fat_arg -o build/"${name}".bin  $nasmFileSize_parameter
+    nasm -f bin -l lst/"${name}".lst   src/boot/"${name}".asm $nasm_fat_arg $nasmFileSize_parameter  
+    output=$(nasm  src/boot/loader.asm $nasm_fat_arg $nasmFileSize_parameter -o build/loader.bin  2>&1 >/dev/null)
+    nasm -f bin -l lst/loader.lst   src/boot/loader.asm $nasm_fat_arg $nasmFileSize_parameter   > /dev/null 2>&1
+    
+    read -r _ _ kernel timer video test sysbuf _ <<< "$output"
+
+    # 转换为十六进制（可加上 0x 前缀）
+    kernel_add=$(printf "0x%X" "$kernel")
+    timer_add=$(printf "0x%X" "$timer")
+    video_add=$(printf "0x%X" "$video")
+    test_add=$(printf "0x%X" "$test")
+    sysbuf_add=$(printf "0x%X" "$sysbuf")
+    {
+    echo "内核大小：.${kernelsize} .字节"
+    echo "视频中断大小：.${videosize} .字节"
+    echo "定时器中断大小：.${timersize} .字节"    
+    echo "测试中断大小：.${testsize} .字节"
+    echo "内核地址：.${kernel_add}"
+    echo "时钟中断地址：.${timer_add}"
+    echo "视频中断地址：.${video_add}"
+    echo "测试中断地址：.${test_add}"
+    echo "系统缓冲区地址：.${sysbuf_add}"
+    }|column -t -s $'.'
     if  $create_img  ; then
-        dd if=/dev/zero of=disk_images/"${img}".img bs=512 count=$floppy_count
-        echo "创建软盘镜像: "${img}".img "
+        dd if=/dev/zero of=disk_images/"${img}".img bs=512 count=$floppy_count > /dev/null 2>&1
+        echo "创建软盘镜像:     "${img}".img "
     else 
         echo "跳过生成镜像文件 使用"${img}".img 写入 "${name}".img"  
     fi
 
-    dd if=build/"${name}".bin of=disk_images/"${img}".img bs=512 count=1 conv=notrunc
+    dd if=build/"${name}".bin of=disk_images/"${img}".img bs=512 count=1 conv=notrunc > /dev/null 2>&1
     # if [[ "$loader_flag" == true ]]; then
     #     jiazai_loader
     # fi
