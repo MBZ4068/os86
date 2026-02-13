@@ -272,6 +272,7 @@ case $floppy_size in
 esac
 
 complie_and_run(){
+    mkdir -p disk_images out_put build
     nasm_and_img
     if [[ "$bochs_flag" == true ]]; then
         run_bochs
