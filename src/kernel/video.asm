@@ -1,37 +1,46 @@
 [BITS 16]
-
 %include "sys_mmc.inc"
-;kernel_setoff å†…æ ¸åŠ è½½åç§»åœ°å€
-;han_setoff æ±‰æ˜¾ç¼“å­˜åŒºåç§»åœ°å€
-;irq_setoff ä¸­æ–­åŠ è½½åç§»åœ°å€   
-;sysbuf_setoff ç³»ç»Ÿç¼“å­˜åŒºåç§»åœ°å€
-
-;å„æ¨¡å—æ ˆé¡¶ä¸æ ˆåº•åœ°å€å®šä¹‰
-;kernel_stack_top å†…æ ¸æ ˆé¡¶
-;kernel_stack_bottom å†…æ ¸æ ˆåº•
-;clock_stack_top æ—¶é’Ÿæ ˆé¡¶
-;clock_stack_bottom æ—¶é’Ÿæ ˆåº•
-;keyboard_stack_top é”®ç›˜æ ˆé¡¶
-;keyboard_stack_bottom é”®ç›˜æ ˆåº•
-;disk_stack_top ç£ç›˜æ ˆé¡¶
-;disk_stack_bottom ç£ç›˜æ ˆåº•
-;video_stack_top è§†é¢‘æ ˆé¡¶
-;video_stack_bottom è§†é¢‘æ ˆåº•
-;otherirq_stack_top å…¶ä»–ä¸­æ–­æ ˆé¡¶
-;otherirq_stack_bottom å…¶ä»–ä¸­æ–­æ ˆåº•
-;app_stack_top åº”ç”¨ç¨‹åºæ ˆé¡¶
-;app_stack_bottom åº”ç”¨ç¨‹åºæ ˆåº•
-
-zimo_dizhi   equ 0xd000
-ascii_pianyi equ 0xfa6e
 
 
-video_service: ;æ±‰æ˜¾
+org video_setoff  ; Ê¹ÓÃºê¶¨ÒåµÄµØÖ·
+
+
+;kernel_setoff ÄÚºË¼ÓÔØÆ«ÒÆµØÖ·
+;han_setoff ººÏÔ»º´æÇøÆ«ÒÆµØÖ·
+;irq_setoff ÖĞ¶Ï¼ÓÔØÆ«ÒÆµØÖ·   
+;sysbuf_setoff ÏµÍ³»º´æÇøÆ«ÒÆµØÖ·
+
+;¸÷Ä£¿éÕ»¶¥ÓëÕ»µ×µØÖ·¶¨Òå
+;kernel_stack_top ÄÚºËÕ»¶¥
+;kernel_stack_bottom ÄÚºËÕ»µ×
+;clock_stack_top Ê±ÖÓÕ»¶¥
+;clock_stack_bottom Ê±ÖÓÕ»µ×
+;keyboard_stack_top ¼üÅÌÕ»¶¥
+;keyboard_stack_bottom ¼üÅÌÕ»µ×
+;disk_stack_top ´ÅÅÌÕ»¶¥
+;disk_stack_bottom ´ÅÅÌÕ»µ×
+;video_stack_top ÊÓÆµÕ»¶¥
+;video_stack_bottom ÊÓÆµÕ»µ×
+;otherirq_stack_top ÆäËûÖĞ¶ÏÕ»¶¥
+;otherirq_stack_bottom ÆäËûÖĞ¶ÏÕ»µ×
+;app_stack_top Ó¦ÓÃ³ÌĞòÕ»¶¥
+;app_stack_bottom Ó¦ÓÃ³ÌĞòÕ»µ×
+
+
+
+video_service: ;ººÏÔ
+    ;ººÏÔÕâÀï³ö´íÁË£¡
+    
     mov [cs:save_sp],sp
     mov sp,video_stack_bottom
-
     push ds
     push es
+    push ax
+    mov ax,cs
+    mov ds,ax
+    mov es,ax
+    pop ax
+
     push si
     push di
     push ax
@@ -39,7 +48,7 @@ video_service: ;æ±‰æ˜¾
     push dx
     push cx
 
-    ;åŠŸèƒ½å·åˆ¤æ–­
+    ;¹¦ÄÜºÅÅĞ¶Ï
     cld
     push bx
     mov  bl, ah
@@ -52,16 +61,16 @@ video_service: ;æ±‰æ˜¾
     
 
 
-set_cursor_shape: ;00 è®¾ç½®å…‰æ ‡å½¢çŠ¶
-    ;AL é€‰æ‹©å…‰æ ‡å½¢çŠ¶
-    ;å…‰æ ‡å­—æ¨¡ï¼š
+set_cursor_shape: ;00 ÉèÖÃ¹â±êĞÎ×´
+    ;AL Ñ¡Ôñ¹â±êĞÎ×´
+    ;¹â±ê×ÖÄ££º
     ;00 _
-    ;01 åšçš„_
+    ;01 ºñµÄ_
     ;02 =
-    ;03 4x4æ–¹å—
-    ;04 å®æ–¹å—
-    ;05 è™šæ–¹å—
-    ;06 ç©ºæ–¹å—
+    ;03 4x4·½¿é
+    ;04 Êµ·½¿é
+    ;05 Ğé·½¿é
+    ;06 ¿Õ·½¿é
     ;07 |
     ;08 <
     
@@ -71,15 +80,15 @@ set_cursor_shape: ;00 è®¾ç½®å…‰æ ‡å½¢çŠ¶
     
 
 
-set_cursor_weizhi: ;01 è®¾ç½®å…‰æ ‡ä½ç½® è¯¥åæ ‡æ˜¯æ˜¾å­˜åæ ‡
-    ;dx ä½ç½®
+set_cursor_weizhi: ;01 ÉèÖÃ¹â±êÎ»ÖÃ ¸Ã×ø±êÊÇÏÔ´æ×ø±ê
+    ;dx Î»ÖÃ
     mov word [video_mem_cursor_coord],dx
     jmp hanxian_end
 
-get_cursor:        ;02 hè·å–å…‰æ ‡ä¿¡æ¯
-show_cursor:       ;03 æ˜¾ç¤ºå…‰æ ‡
-
-    mov dx,  [cs:video_mem_cursor_coord]  ;åœ¨æ˜¾å­˜ä¸­çš„ä½ç½®  ï¼ˆä»¥8x8åƒç´ åˆ†å‰²æˆ80x25ï¼‰
+get_cursor:        ;02 h»ñÈ¡¹â±êĞÅÏ¢
+show_cursor:       ;03 ÏÔÊ¾¹â±ê
+    
+    mov dx,  [cs:video_mem_cursor_coord]  ;ÔÚÏÔ´æÖĞµÄÎ»ÖÃ  £¨ÒÔ8x8ÏñËØ·Ö¸î³É80x25£©
 
 
     cmp dx,  0xffff
@@ -88,7 +97,7 @@ show_cursor:       ;03 æ˜¾ç¤ºå…‰æ ‡
 
     .read_cursor:
         
-        ;DX ä¸ºåæ ‡
+        ;DX Îª×ø±ê
         mov ax, 0xb800
         mov ds, ax
         mov ax, cs
@@ -100,10 +109,10 @@ show_cursor:       ;03 æ˜¾ç¤ºå…‰æ ‡
         xor  dh, dh
         mov  si, dx
         shl  si, 1
-        mov  si,word [cs:video_mem_rowlist+si]
+        mov  si,word [ds:video_mem_rowlist+si]
         add  si, ax     
         xor bx,bx                  
-        mov  bl,byte [cs:active_cursor]
+        mov  bl,byte [ds:active_cursor]
         shl  bx,1
         shl  bx,1
         shl  bx,1
@@ -113,7 +122,7 @@ show_cursor:       ;03 æ˜¾ç¤ºå…‰æ ‡
         mov  dx, 80
 
     .read_to_cursor_typehead:
-        ;ç»˜åˆ¶å…‰æ ‡1ï¼Œ2è¡Œ
+        ;»æÖÆ¹â±ê1£¬2ĞĞ
         
         mov al,byte [ds:si]
         mov bh,al
@@ -127,7 +136,7 @@ show_cursor:       ;03 æ˜¾ç¤ºå…‰æ ‡
         add si ,dx
         add di ,2
 
-        ;ç»˜åˆ¶å…‰æ ‡3ï¼Œ4è¡Œ
+        ;»æÖÆ¹â±ê3£¬4ĞĞ
         mov al,byte [ds:si]
         mov bh,al
         mov al,byte [ds:si+0x2000]
@@ -140,7 +149,7 @@ show_cursor:       ;03 æ˜¾ç¤ºå…‰æ ‡
         add si ,dx
         add di ,2
 
-        ;ç»˜åˆ¶å…‰æ ‡5ï¼Œ6è¡Œ
+        ;»æÖÆ¹â±ê5£¬6ĞĞ
 
         mov al,byte [ds:si]
         mov bh,al
@@ -155,7 +164,7 @@ show_cursor:       ;03 æ˜¾ç¤ºå…‰æ ‡
         add si ,dx
         add di ,2
 
-        ;ç»˜åˆ¶å…‰æ ‡7ï¼Œ8è¡Œ
+        ;»æÖÆ¹â±ê7£¬8ĞĞ
         
         mov al,byte [ds:si]
         mov bh,al
@@ -168,60 +177,60 @@ show_cursor:       ;03 æ˜¾ç¤ºå…‰æ ‡
         jmp hanxian_end
 
 
-set_artive_page: ;04 è®¾ç½®æ´»åŠ¨é¡µ
-redraw:          ;05 åˆ·æ–°å±å¹•   
-up_roll:         ;06 å¾€ä¸Šæ»šåŠ¨å±å¹•
-down_roll:       ;07 å¾€ä¸‹æ»šåŠ¨å±å¹•
+set_artive_page: ;04 ÉèÖÃ»î¶¯Ò³
+redraw:          ;05 Ë¢ĞÂÆÁÄ»   
+up_roll:         ;06 ÍùÉÏ¹ö¶¯ÆÁÄ»
+down_roll:       ;07 ÍùÏÂ¹ö¶¯ÆÁÄ»
 
-draw_word:       ;08 å†™ä¸€ä¸ªwordåˆ°æ˜¾å­˜
-    ;bx,å­—ç¬¦
-    ;cx,åè‰²
-    ;dx,åæ ‡ 
-    xchg bx,bx
+draw_word:       ;08 Ğ´Ò»¸öwordµ½ÏÔ´æ
+    ;bx,×Ö·û
+    ;cx,·´É«
+    ;dx,×ø±ê 
+    
     xor di, di
     
-    ; --- 1. è®¡ç®—å±å¹•åœ°å€ (ES:DI) ---
+    ; --- 1. ¼ÆËãÆÁÄ»µØÖ· (ES:DI) ---
     xor ax, ax
     mov al, dh
     shl ax, 1
     mov di, ax
     mov di, [cs:video_mem_rowlist+di]
   
-    ;åˆ—
+    ;ÁĞ
     xor ax, ax
     mov al, dl
     add di, ax ; DI Ready
 
-    ; --- 2. åˆ¤æ–­ ASCII è¿˜æ˜¯ æ±‰å­— ---
+    ; --- 2. ÅĞ¶Ï ASCII »¹ÊÇ ºº×Ö ---
     cmp  bl, 80h
     jb   .ascii_jizhi_shezhi
-    ; --- 3. æ±‰å­—å¤„ç† (GB2312 æŸ¥è¡¨ä¼˜åŒ–ç‰ˆ) ---
-    ; è¿™é‡Œçš„é€»è¾‘ï¼šSI = (Table[åŒºç´¢å¼•] + ä½ç´¢å¼•) * 8
+    ; --- 3. ºº×Ö´¦Àí (GB2312 ²é±íÓÅ»¯°æ) ---
+    ; ÕâÀïµÄÂß¼­£ºSI = (Table[ÇøË÷Òı] + Î»Ë÷Òı) * 8
     xchg bh, bl
-    ; å‡†å¤‡ä½ç´¢å¼• (å­˜å…¥ DX)
+    ; ×¼±¸Î»Ë÷Òı (´æÈë DX)
     xor  dx, dx
     mov  dl, bl
-    sub  dx, 0xa1            ; DX = ä½ç´¢å¼• (0~93)
-    ; å‡†å¤‡åŒºç´¢å¼• (å­˜å…¥ AX)
+    sub  dx, 0xa1            ; DX = Î»Ë÷Òı (0~93)
+    ; ×¼±¸ÇøË÷Òı (´æÈë AX)
     xor  ax, ax
     mov  al, bh
-    sub  ax, 0xa1            ; AX = åŒºç´¢å¼• (0~93) æ³¨æ„è¿™é‡Œæ˜¯ A1ï¼Œä¸æ˜¯ A0ï¼Œä¿æŒ 0-based
+    sub  ax, 0xa1            ; AX = ÇøË÷Òı (0~93) ×¢ÒâÕâÀïÊÇ A1£¬²»ÊÇ A0£¬±£³Ö 0-based
     
-    ; è®¡ç®—æŸ¥è¡¨åœ°å€
-    shl ax, 1                 ; å…³é”®ä¿®æ­£ï¼šå› ä¸ºæ˜¯ dw è¡¨ï¼Œæ‰€ä»¥ç´¢å¼•è¦ * 2
-    mov si, ax                ; BX æŒ‡å‘è¡¨ä¸­å¯¹åº”çš„æ•°æ®
-    ; è¯»å–åŸºå‡†å€¼
-    ; å…³é”®ä¿®æ­£ï¼šå¿…é¡»ä½¿ç”¨ CS: å‰ç¼€ï¼Œå› ä¸ºæ˜¯åœ¨ä¸­æ–­é‡Œï¼Œè¡¨åœ¨ä»£ç æ®µ
-    ; å…³é”®ä¿®æ­£ï¼šç›´æ¥è¦†ç›– SIï¼Œä¸è¦ç”¨ add si (å› ä¸º si åˆå§‹å€¼æ˜¯è„çš„)
+    ; ¼ÆËã²é±íµØÖ·
+    shl ax, 1                 ; ¹Ø¼üĞŞÕı£ºÒòÎªÊÇ dw ±í£¬ËùÒÔË÷ÒıÒª * 2
+    mov si, ax                ; BX Ö¸Ïò±íÖĞ¶ÔÓ¦µÄÊı¾İ
+    ; ¶ÁÈ¡»ù×¼Öµ
+    ; ¹Ø¼üĞŞÕı£º±ØĞëÊ¹ÓÃ CS: Ç°×º£¬ÒòÎªÊÇÔÚÖĞ¶ÏÀï£¬±íÔÚ´úÂë¶Î
+    ; ¹Ø¼üĞŞÕı£ºÖ±½Ó¸²¸Ç SI£¬²»ÒªÓÃ add si (ÒòÎª si ³õÊ¼ÖµÊÇÔàµÄ)
     mov si, [cs:zone_list+si]
-    ; åŠ ä¸Šä½ç´¢å¼•        
+    ; ¼ÓÉÏÎ»Ë÷Òı        
     add si, dx
     
-    ; ä¹˜ä»¥ 8 (å­—æ¨¡å¤§å°)
+    ; ³ËÒÔ 8 (×ÖÄ£´óĞ¡)
     shl si, 1
     shl si, 1
     shl si, 1
-    ; è®¾ç½®å­—åº“æ®µ
+    ; ÉèÖÃ×Ö¿â¶Î
     mov ax, zimo_dizhi
     mov ds, ax
     
@@ -234,20 +243,20 @@ draw_word:       ;08 å†™ä¸€ä¸ªwordåˆ°æ˜¾å­˜
         shl bx, 1
         shl bx, 1
         shl bx, 1
-        mov si, 0xFA6E     ;asciiç å­—æ¨¡æ‰€åœ¨çš„ä½ç½®    
+        mov si, 0xFA6E     ;asciiÂë×ÖÄ£ËùÔÚµÄÎ»ÖÃ    
         add si, bx
         
     .shezhi_xiancun_jizhi:
         mov ax, 0xB800
         mov es, ax
         xor bx, bx
-        mov dx, 79     ; ä¼˜åŒ–ï¼šå¾ªç¯ä¸­ä½¿ç”¨å¯„å­˜å™¨åŠ æ³•
+        mov dx, 79     ; ÓÅ»¯£ºÑ­»·ÖĞÊ¹ÓÃ¼Ä´æÆ÷¼Ó·¨
         
-        cmp cl, 0           ;clæ˜¯æ˜¯å¦åè‰²çš„å‚æ•°
+        cmp cl, 0           ;clÊÇÊÇ·ñ·´É«µÄ²ÎÊı
         jz  .draw_loop_pair
         mov bx, 0xffff
     .draw_loop_pair:
-        ; ç»˜åˆ¶ 1ã€2 è¡Œ
+        ; »æÖÆ 1¡¢2 ĞĞ
         lodsb
         xor ax,                  bx
         stosb
@@ -255,7 +264,7 @@ draw_word:       ;08 å†™ä¸€ä¸ªwordåˆ°æ˜¾å­˜
         xor ax,                  bx
         mov byte [es:di+0x1fff], al
         add di,                  dx ; add di, 79
-        ; ç»˜åˆ¶ 3ã€4 è¡Œ
+        ; »æÖÆ 3¡¢4 ĞĞ
         lodsb
         xor ax,                  bx
         stosb
@@ -263,7 +272,7 @@ draw_word:       ;08 å†™ä¸€ä¸ªwordåˆ°æ˜¾å­˜
         xor ax,                  bx
         mov byte [es:di+0x1fff], al
         add di,                  dx
-        ; ç»˜åˆ¶ 5ã€6 è¡Œ
+        ; »æÖÆ 5¡¢6 ĞĞ
         lodsb
         xor ax,                  bx
         stosb
@@ -271,7 +280,7 @@ draw_word:       ;08 å†™ä¸€ä¸ªwordåˆ°æ˜¾å­˜
         xor ax,                  bx
         mov byte [es:di+0x1fff], al
         add di,                  dx
-        ; ç»˜åˆ¶ 7ã€8 è¡Œ
+        ; »æÖÆ 7¡¢8 ĞĞ
         lodsb
         xor ax,                  bx
         stosb
@@ -280,9 +289,9 @@ draw_word:       ;08 å†™ä¸€ä¸ªwordåˆ°æ˜¾å­˜
         mov byte [es:di+0x1fff], al
         jmp hanxian_end
 
-to_cache: ;09 å†™åˆ°ç¼“å­˜
+to_cache: ;09 Ğ´µ½»º´æ
 
-tty:      ;0a ç”µä¼ æ¨¡å¼ 
+tty:      ;0a µç´«Ä£Ê½ 
 
 hanxian_end:
     pop cx
@@ -291,6 +300,7 @@ hanxian_end:
     pop ax
     pop di
     pop si
+
     pop es
     pop ds
 
@@ -299,25 +309,26 @@ hanxian_end:
     sti
 
     iret
-    
+zimo_dizhi   equ 0xd000
+ascii_pianyi equ 0xfa6e
 save_sp  dw 0x0000
-video_modlist          db 0x1a,0x0a                    ;ä¸ºäº†æ˜¾ç¤ºæ¨¡å¼çš„å¯æ‰©å±•æ€§
+video_modlist          db 0x1a,0x0a                    ;ÎªÁËÏÔÊ¾Ä£Ê½µÄ¿ÉÀ©Õ¹ĞÔ
 active_videomod        db 0eh
-active_page            db 0                            ;è®°å½•å½“å‰æ´»åŠ¨ç¼“å­˜é¡µ
-page_offset            db 0                            ;è®°å½•ç¼“å­˜é¡µåç§»è¡Œ
+active_page            db 0                            ;¼ÇÂ¼µ±Ç°»î¶¯»º´æÒ³
+page_offset            db 0                            ;¼ÇÂ¼»º´æÒ³Æ«ÒÆĞĞ
 
-active_cursor          db 0                       ;å½“å‰ä½¿ç”¨åœ¨å…‰æ ‡
-cache_cursor_coord     dw 0                            ;è®°å½•å…‰æ ‡æ‰€åœ¨çš„ç¼“å­˜é¡µä¸ºåŸºç¡€çš„åæ ‡
-video_mem_cursor_coord dw 0                            ;è®°å½•å…‰æ ‡åœ¨æ˜¾å­˜ä¸­çš„åæ ‡ ï¼ˆä»¥æ±‰æ˜¾æ¨¡å¼å¸ƒå±€çš„ï¼‰
+active_cursor          db 0                       ;µ±Ç°Ê¹ÓÃÔÚ¹â±ê
+cache_cursor_coord     dw 0                            ;¼ÇÂ¼¹â±êËùÔÚµÄ»º´æÒ³Îª»ù´¡µÄ×ø±ê
+video_mem_cursor_coord dw 0                            ;¼ÇÂ¼¹â±êÔÚÏÔ´æÖĞµÄ×ø±ê £¨ÒÔººÏÔÄ£Ê½²¼¾ÖµÄ£©
 cache_typehead         db 0,0,0,0,0,0,0,0
-;å…‰æ ‡å­—æ¨¡ï¼š
+;¹â±ê×ÖÄ££º
 ;00 _
-;01 åšçš„_
+;01 ºñµÄ_
 ;02 =
-;03 4x4æ–¹å—
-;04 å®æ–¹å—
-;05 è™šæ–¹å—
-;06 ç©ºæ–¹å—
+;03 4x4·½¿é
+;04 Êµ·½¿é
+;05 Ğé·½¿é
+;06 ¿Õ·½¿é
 ;07 |
 ;08 <
 cursor_typehead:        dw 0x0000, 0x0000, 0x0000, 0xFE00
@@ -330,34 +341,34 @@ cursor_typehead:        dw 0x0000, 0x0000, 0x0000, 0xFE00
                        dw 0x8080, 0x8080, 0x8080, 0x8000
                        dw 0x1e3e, 0x7efe, 0x7e3e, 0x1e00
 ; -----------------------------------------------------------
-; é¢„è®¡ç®—çš„ä¹˜æ³•è¡¨: Index * 94
+; Ô¤¼ÆËãµÄ³Ë·¨±í: Index * 94
 ; -----------------------------------------------------------
-zone_list: ;åŒºç çš„è®¡ç®—è¡¨
+zone_list: ;ÇøÂëµÄ¼ÆËã±í
     dw 0,94,188,282,376,470,564,658,752,846,940,1034,1128,1222,1316,1410
     dw 1504,1598,1692,1786,1880,1974,2068,2162,2256,2350,2444,2538,2632,2726,2820
     dw 2914,3008,3102,3196,3290,3384,3478,3572,3666,3760,3854,3948,4042,4136,4230
     dw 4324,4418,4512,4606,4700,4794,4888,4982,5076,5170,5264,5358,5452,5546,5640
     dw 5734,5828,5922,6016,6110,6204,6298,6392,6486,6580,6674,6768,6862,6956,7050
     dw 7144,7238,7332,7426,7520,7614,7708,7802,7896,7990,8084,8178,8272,8366,8460
-    dw 8554,8648,8742                                                             ; åªè¦åˆ°è¿™é‡Œå°±å¤Ÿäº†ï¼Œä¸€å…± 94 ä¸ªåŒº
+    dw 8554,8648,8742                                                             ; Ö»Òªµ½ÕâÀï¾Í¹»ÁË£¬Ò»¹² 94 ¸öÇø
 
-video_mem_rowlist: dw 0,320,640,960,1280,1600 ;æ˜¾å­˜çš„ä»¥8è¡Œåƒç´ ä¸ºä¸€è¡Œçš„è¡Œåç§»è¡¨
+video_mem_rowlist: dw 0,320,640,960,1280,1600 ;ÏÔ´æµÄÒÔ8ĞĞÏñËØÎªÒ»ĞĞµÄĞĞÆ«ÒÆ±í
                dw 1920,2240,2560,2880,3200
                dw 3520,3840,4160,4480,4800
                dw 5120,5440,5760,6080,6400
                dw 6720,7040,7360,7680
 
-function_num_list: ;æ­¤ä¸­æ–­çš„å¿«é€Ÿè·³è½¬åŠŸèƒ½çš„è¡¨
-                dw set_cursor_shape  ;00 è®¾ç½®å…‰æ ‡å½¢çŠ¶
-                dw set_cursor_weizhi ;01 è®¾ç½®å…‰æ ‡ä½ç½®
-                dw get_cursor        ;02 è·å–å…‰æ ‡ä¿¡æ¯
-                dw show_cursor       ;03 æ˜¾ç¤ºå…‰æ ‡
-                dw set_artive_page   ;04 è®¾ç½®æ´»åŠ¨é¡µ
-                dw redraw            ;05 åˆ·æ–°å±å¹•   
-                dw up_roll           ;06 å¾€ä¸Šæ»šåŠ¨å±å¹•
-                dw down_roll         ;07 å¾€ä¸‹æ»šåŠ¨å±å¹•
-                dw draw_word         ;08 åœ¨æ˜¾å­˜ç»˜åˆ¶å•ä¸ªå­—
-                dw to_cache          ;09 å†™åˆ°ç¼“å­˜
-                dw tty               ;0a ç”µä¼ æ¨¡å¼
+function_num_list: ;´ËÖĞ¶ÏµÄ¿ìËÙÌø×ª¹¦ÄÜµÄ±í
+                dw set_cursor_shape  ;00 ÉèÖÃ¹â±êĞÎ×´
+                dw set_cursor_weizhi ;01 ÉèÖÃ¹â±êÎ»ÖÃ
+                dw get_cursor        ;02 »ñÈ¡¹â±êĞÅÏ¢
+                dw show_cursor       ;03 ÏÔÊ¾¹â±ê
+                dw set_artive_page   ;04 ÉèÖÃ»î¶¯Ò³
+                dw redraw            ;05 Ë¢ĞÂÆÁÄ»   
+                dw up_roll           ;06 ÍùÉÏ¹ö¶¯ÆÁÄ»
+                dw down_roll         ;07 ÍùÏÂ¹ö¶¯ÆÁÄ»
+                dw draw_word         ;08 ÔÚÏÔ´æ»æÖÆµ¥¸ö×Ö
+                dw to_cache          ;09 Ğ´µ½»º´æ
+                dw tty               ;0a µç´«Ä£Ê½
 
-;60hä¸­æ–­ç»“æŸ=============
+;60hÖĞ¶Ï½áÊø=============

@@ -2,26 +2,27 @@
 
 %include "sys_mmc.inc"
 
-time_isr:           ;å®šæ—¶å™¨ä¸­æ–­
+
+
+org timer_setoff  ; Ê¹ÓÃºê¶¨ÒåµÄµØÖ·
+
+time_isr:           ;¶¨Ê±Æ÷ÖÐ¶Ï
+    
     mov [cs:save_sp],sp
-    mov sp,clock_stack_bottom
+    mov sp,timer_stack_bottom
     push ax
-    push ds
-
-    mov ax, cs
-    mov ds, ax
-
     inc word [cs:tick_count]
 
     mov ax,[cs:tick_count]
-    and al,0x07           ;é—´éš”å…«ä¸ªå‘¨æœŸ
+    and al,0x07           ;¼ä¸ô°Ë¸öÖÜÆÚ
     cmp al,0
     jz .refresh_cursor
     .time_end:
         mov al, 0x20
         out 0x20, al
-        pop ds
         pop ax
+        mov sp, [cs:save_sp]
+        
         iret
 
     .refresh_cursor:

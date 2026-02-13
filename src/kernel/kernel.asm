@@ -37,7 +37,7 @@
 
 
 ;魔数 55aa,a55a
-[BITS 16]
+
 %include "sys_mmc.inc"
 ;kernel_setoff 内核加载偏移地址
 ;han_setoff 汉显缓存区偏移地址
@@ -68,7 +68,7 @@ Kernel_StackTop equ 0x1A00
 
 jmp short start
 nop
-
+code_top dw 0
 tick_count dw 0
 
 
@@ -92,7 +92,8 @@ start:
     
     ; sti
     ; pop ds
-        ; 1. 设置 CGA Mode 06h
+
+    ; 1. 设置 CGA Mode 06h
     ; ------------------------------------------------
     mov ax, 0006h
     int 10h
@@ -100,11 +101,11 @@ start:
     mov ax,0004h
     int 60h
 
-        MOV AH, 08H
+    MOV AH, 08H
    
     mov  al, 0
     mov  cl, 0
-    xchg bx, bx
+    
     mov  si, print_str
     
 print_hang:
@@ -138,7 +139,7 @@ print_hang_add:
     inc al
     jmp print_hang
 print_end:
-    xchg bx, bx
+    
     mov  ax, print_str
     mov  dx, 0x1844
     call Error_Manage

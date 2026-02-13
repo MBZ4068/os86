@@ -1,5 +1,11 @@
 [BITS 16]
+xchg bx,bx
 %include "sys_mmc.inc"
+
+
+
+org test_setoff  ; 使用宏定义的地址
+
 Error_Manage:
     mov [cs:save_sp],sp
     mov sp,otherirq_stack_bottom

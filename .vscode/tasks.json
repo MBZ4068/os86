@@ -5,10 +5,16 @@
       "label": "编译os86", // ① 这是任务的名字，后面绑定快捷键时要用
       "type": "shell",        // ② 在shell/终端中执行命令
       "command": "bash",    // ③ 要调用的主命令，也可以是 `make`, `gcc`, `npm`, 或 `./build.sh` 等
+      "options": {                     // 👈 新增：任务的环境变量
+        "env": {
+          "LANG": "zh_CN.gb2312"      // 强制使用 GB2312 编码
+        }
+      },
       "args": [               // ④ 传递给命令的参数
         "D:/os86/run.sh", // 假设你的编译脚本是项目下的一个Python脚本
 		"-d"
       ],
+
       "group": {
         "kind": "build",
         "isDefault": true     // ⑤ 设为默认构建任务后，可用 Ctrl+Shift+B 直接运行

@@ -2,6 +2,15 @@ CPU 8086
 
 org 0x10000
 %include "sys_mmc.inc"
+
+%define HEX_DIGITS "0123456789ABCDEF"
+
+
+
+%warning _ks _ts _vs _tes _sbs
+
+
+
 ;kernel_setoff 内核加载偏移地址
 ;han_setoff 汉显缓存区偏移地址
 ;irq_setoff 中断加载偏移地址   
@@ -16,14 +25,12 @@ org 0x10000
 ;video_stack_bottom 视频栈底
 ;otherirq_stack_bottom 其他中断栈底
 ;app_stack_bottom 应用程序栈底
+
 jmp short loader_start
 nop
 
 %include "fat12.inc"
 
-timer_setoff dw irq_setoff
-video_setoff dw 0
-test_setoff  dw 0
 
 loader_start:
     
@@ -39,6 +46,7 @@ loader_start:
     sti
     mov [BS_DrvNum], dl     ; <--- BIOS 传来的驱动器号存入变量
 ;清屏
+
     mov ax, 03h
     int 10h
 ;打印提醒文字
@@ -55,27 +63,28 @@ loader_start:
 call load_fat
 
 ;=========  加载中断程序到内存
-; 时钟中断
-mov  si,                timername
-xor  ax,                ax
-mov  bx,                [timer_setoff]
-call find_and_loader
 
 ;视频中断
-add  bx,                2
-mov  [video_setoff],  ax
+
+mov  bx,                video_setoff
 mov  si,                videoname
 xor  ax,                ax
+
 call find_and_loader
+
+; 时钟中断
+
+mov  si,                timername
+xor  ax,                ax
+mov  bx,                timer_setoff
+call find_and_loader    
 
 ;测试中断
 
-add  bx,                2
-mov  [test_setoff],     ax
+mov  bx,                test_setoff
 mov  si,                testname
 xor  ax,                ax
 call find_and_loader
-xchg bx,bx
 
 
 ;=======加载哨兵位
@@ -84,19 +93,31 @@ call set_magicnum
 
 ;安装中断
 push ds
-cli 
-xor  ax,                ax
+mov  ax,                0
 mov  ds,                ax
-mov  ax,                [video_setoff]
+cli   
+
+mov  ax,                video_setoff
 mov  word [ds:0x180],   ax
-mov  word [ds:0x182],   cs             ;设置60中断
-mov  ax,                [timer_setoff]
+xor ax,ax
+mov  word [ds:0x182],   ax             ;设置60中断
+
+
+mov  ax,                timer_setoff 
 mov  word [ds:0x8*4],   ax             ;时钟中断
-mov  word [ds:0x8*4+2], cs
+xor ax,ax
+mov  word [ds:0x8*4+2], ax
 
 sti
-pop  ds
-xchg bx,bx
+push ds
+
+mov ax, 0006h 
+int 10h
+
+mov ax,0x0008
+int 60h
+
+
 
 
 jmp  $
@@ -106,26 +127,37 @@ jmp  $
 ;参数：
 ;si 文件名地址
 ;ax:bx 文件加载位置
-;出口参数：
-;bx 下一个文件该加载的内存地址的变量位置
+
 
 find_and_loader:
+   
+    push di
     push es
     mov  es, ax
+    
     call Find_file
+    
     push si
 
+    
+    
+    
     ;有返回值 ; ax 文件起始簇号 cx,dx, 文件大小字节
+    
     call Load_file
-
+    
+    
     mov  si, print_load
+    
     call TTY_Print
+
     pop  si
-    push si
     call TTY_Print
-    pop  si
+    
     
     pop es
+    pop di
+    
     ret
 
    
@@ -148,39 +180,41 @@ find_and_loader:
 
 set_magicnum:
     push ax
+    push bx
     push ds
-
+    mov  ax,                    word [magic_num]
+    push ax
     xor  ax,                    ax
     mov  ds,                    ax
-    mov  ax,                    word [magic_num]
+    pop ax
+   
     
-    mov  [kernel_stack_top],    ax               ; fat表项底
-    mov  [kernel_stack_bottom], ax               ; 内核栈底
+    
+    mov word [fat_bottom],    ax               ; fat表项底
+    mov word [kernel_stack_bottom], ax               ; 内核栈底
 
-    mov [clock_stack_bottom],    ax ; 时钟栈底
-    mov [keyboard_stack_bottom], ax ; 键盘栈底
-    mov [disk_stack_bottom],     ax ; 磁盘栈底
-    mov [video_stack_bottom],    ax ; 视频栈底
-    mov [otherirq_stack_bottom], ax ; 其他中断栈底
-    mov [app_stack_bottom],      ax ; 应用程序栈底
+    mov word [timer_stack_bottom],    ax ; 时钟栈底
+    mov word [keyboard_stack_bottom], ax ; 键盘栈底
+    mov word [disk_stack_bottom],     ax ; 磁盘栈底
+    mov word [video_stack_bottom],    ax ; 视频栈底
+    mov word [otherirq_stack_bottom], ax ; 其他中断栈底
+    mov word [app_stack_bottom],      ax ; 应用程序栈底
 
-    mov [kernel_setoff-2], ax ; 内核加载偏移地址
-    mov [han_setoff-2],    ax ; 汉显缓存区偏移地址
-    mov [irq_setoff-2],    ax ; 中断加载偏移地址   
-    mov [sysbuf_setoff-2], ax ; 系统缓存区偏移地址
-
-    ;中断文件是在loader文件中才确定内存地址的
-    mov [timer_setoff-2], ax
-    mov [video_setoff-2], ax
-    mov [test_setoff-2],  ax
+    ;mov word [han_setoff],   ax ; 汉显缓存区偏移地址
+    mov word [kernel_setoff-2], ax ; 内核加载偏移地址
+    mov word [timer_setoff-2],   ax ; 时钟中断加载偏移地址
+    mov word [video_setoff-2],   ax ; 视频中断加载偏移地址
+    mov word [test_setoff-2],    ax ; 测试中断加载偏移地址
+    mov word [sysbuf_setoff-2], ax ; 系统缓存区偏移地址
 
     
     pop ds
+    pop bx
     pop ax
     ret
 
 ;读取所有的fat表项到0x500
-;检测无问题
+
 load_fat:
     push es
     push ax
@@ -562,7 +596,7 @@ Load_file:
         pop cx
         pop bx
         pop ax
-        add bx, dx ;文件偏移地址的末尾位置  dx是文件大小地位 bx是偏移地址 加起来就是文件末尾的偏移地址
+ 
         ret
 
 
