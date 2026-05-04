@@ -30,5 +30,6 @@ time_isr:           ;¶¨Ê±Æ÷ÖÐ¶Ï
         int 60h
         jmp .time_end
 
+
 tick_count dw 0
 save_sp  dw 0x0000

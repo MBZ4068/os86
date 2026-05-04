@@ -39,6 +39,7 @@ Error_Manage:
     mov cl, 0
     int 60h
     pop ax
+   
     
     pop si
     pop bx

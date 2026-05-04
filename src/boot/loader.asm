@@ -7,7 +7,6 @@ org 0x10000
 
 
 
-%warning _ks _ts _vs _tes _sbs
 
 
 

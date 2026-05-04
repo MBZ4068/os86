@@ -371,4 +371,5 @@ function_num_list: ;此中断的快速跳转功能的表
                 dw to_cache          ;09 写到缓存
                 dw tty               ;0a 电传模式
 
+
 ;60h中断结束=============
