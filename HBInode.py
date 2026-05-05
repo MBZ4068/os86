@@ -1,9 +1,9 @@
 from ctypes import c_ubyte, c_uint16, c_uint32
 
-
 class BitMap():
     """位图类，用于管理空闲块/簇的状态"""
     def __init__(self, bit_num):
+
         """
         初始化位图
         :param bit_num: 位图总位数（对应总块数或总簇数）
@@ -89,64 +89,89 @@ class InNode():
         self.pointerlist = [c_uint16(0xFFFF)] * 10   # 数据块指针数组，0xFFFF 表示空指针
 
 
-class Dir():
+class Dirent():
     """目录项类，表示目录树中的一个节点"""
-    def __init__(self, file_name, inode_index, up_dir=None):
+    def __init__(self, file_name:str, inode_index:int ):
         """
         :param file_name: 文件或目录名
         :param inode_index: 对应的 inode 索引号
         :param up_dir: 上级目录对象引用
         """
-        self.file_name = file_name
+        self.name = file_name
         self.inode_index = inode_index
-        self.up_dir = up_dir
+class Dir():
+    "目录类 这里用列表表示"
+    def __init__(self,name:str,inode_index:int,parent_dir:Dirent|None,*args: Dirent | Dir):
+        self.name =name
+        self.inode_index=inode_index
+        self.dot=Dirent('./',inode_index)
 
+        if parent_dir !=None:
+            self.dotdot=Dirent('../',parent_dir.inode_index)
+        else:
+            self.dotdot=Dirent('../',inode_index)
+    
+        self.data:list[Dirent|Dir]=[self.dot,self.dotdot]
+
+        for i in args:
+            self.data.append(i)
+
+    def add_dirent(self,*args:Dirent | Dir):
+        for i in args:
+            self.data.append(i)
+    def del_dirent(self,*args:Dirent | Dir):
+        for i in args:
+            self.data.remove(i)
+        
 
 class Dir_Tree():
     """目录树管理类"""
-    dir_tree = [Dir("/", inode_index=0x80, up_dir=None)]   # 根目录预置
+    Root_Dir=Dir('/',0,None)
 
-    def add_dir(self, dir_name, inode_index, up_dir):
-        """
-        在目录树中添加新目录项
-        :param dir_name: 新目录名称
-        :param inode_index: 新目录的 inode 索引
-        :param up_dir: 上级目录对象
-        """
-        new_dir = [Dir(dir_name, inode_index, up_dir)]   # 注意：将目录项包裹在列表中
-        path = self.get_dir_path(up_dir, Dir_Tree.dir_tree)
 
-        file_list = Dir_Tree.dir_tree
-        for i in path[:-1]:      # 逐级进入目录直到倒数第二级
-            file_list = file_list[i]
-        file_list.append(new_dir)   # 在目标位置添加新目录项
-    def add_file(self,file_name,inode_index,up_dir):
+    def add_file(self,file:Dirent|Dir,up_dir:Dir):
+        up_dir.add_dirent(file)
+
+    def find_file(self,file_name:str|None=None,inode_index:int|None=None,file:Dirent|Dir|None=None,first:bool=True,start_dir:Dir| None=None) -> Dir|None|list:
+        return_list=[] 
+        dir_list=[]
+        if start_dir == None:
+            start_dir=self.Root_Dir
         
-        pass
+        if file_name == '/' or inode_index == 0 or file == self.Root_Dir:
+            if first==1:
+                return self.Root_Dir
+            else :
+                return [self.Root_Dir]
 
-    def get_dir_path(self, dir_obj, dir_list, path=None):
-        """
-        递归查找目录对象在目录树中的路径（索引序列）
-        :param dir_obj: 目标目录对象
-        :param dir_list: 当前搜索的目录列表
-        :param path: 当前累积的路径索引列表
-        :return: 路径索引列表，若未找到返回 None
-        """
-        if path is None:
-            path = []
-        for i in range(len(dir_list)):
-            path.append(i)
-            if type(dir_list[i]) is list:
-                # 递归搜索子目录列表
-                repath = self.get_dir_path(dir_obj, dir_list[i], path)
-                if repath is not None:
-                    return repath
-            if dir_list[i] == dir_obj:
-                return path   # 找到目标对象，返回路径
-            path.pop()        # 回溯
+        dirent_list = start_dir.data
+
+        if file in dirent_list:
+            if first==1:
+                return start_dir
+            else :
+                 return_list.append(start_dir)
+        for i in dirent_list:
+            if file_name and inode_index != None:
+                if i.name == file_name or i.inode_index == inode_index:
+                    if first==1:
+                        return start_dir
+                    else :
+                        return_list.append(start_dir)
+
+            if isinstance(i, Dir): 
+                dir_list.append(i)
+        if dir_list != []:
+            for i in dir_list:
+                rv=self.find_file(file_name,inode_index,file,first,start_dir=i)
+                if first ==0 and rv != None:
+
+                    return_list=return_list+rv
+                elif rv != None:
+                    return rv
         return None
 
-
+            
 class HBinode_Filesysteam():
     """基于 inode 的文件系统主类（未完整实现）"""
     def __init__(self, blk_size, cluster_size):
