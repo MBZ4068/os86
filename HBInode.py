@@ -1,5 +1,6 @@
 from ctypes import c_ubyte, c_uint16, c_uint32
 
+
 class BitMap():
     """位图类，用于管理空闲块/簇的状态"""
     def __init__(self, bit_num):
@@ -100,13 +101,16 @@ class Dirent():
         self.namesize=len(name.encode('gb2312'))
         if self.namesize  <=30:
             self.name = name
+            spece_num=31-self.namesize
+            self.long_name=' '*spece_num +self.name
         else:
             raise ValueError(f"文件名过长，最大允许 30 个字节，实际为 {self.namesize} ")
             
 
-        self.inode_index = inode_index
-        def get_longname(self) -> str:
-            
+        self.inode_index =c_uint16(inode_index)
+
+        
+             
             
 
 class Dir(Dirent):
@@ -121,29 +125,29 @@ class Dir(Dirent):
             self.dotdot=Dirent('../',inode_index)
         
 
-        self.dirent:list[Dirent|Dir]=[self.dot,self.dotdot]
+        self.dirents:list[Dirent|Dir]=[self.dot,self.dotdot]
 
         for i in args:
             if i in self.name_list():
-                self.dirent.append(i)
+                self.dirents.append(i)
             else:
                 print(f"目录 {self.name } 中已存在名为 {i.name} 的目录项")
 
     def name_list(self):
         namelist=[]
-        for i in self.dirent:
+        for i in self.dirents:
             namelist.append(i.name)
         return namelist
     def add_dirent(self,*args:Dirent | Dir):
         for i in args:
             if i in self.name_list():
-                self.dirent.append(i)
+                self.dirents.append(i)
             else:
                 print(f"目录 {self.name } 中已存在名为 {i.name} 的目录项,已跳过")
     def del_dirent(self,*args:Dirent | Dir):
         for i in args:
-            if i in  self.dirent:
-                self.dirent.remove(i)
+            if i in  self.dirents:
+                self.dirents.remove(i)
             else:
                 print(f"目录 {self.name } 中不存在名为 {i.name} 的目录项")
     
@@ -151,58 +155,64 @@ class Dir(Dirent):
 class Dir_Tree():
     """目录树管理类"""
     def __init__(self):
-        Root_Dir=Dir('/',0,None)
+        root_dir=Dir('/',0,None)
 
 
     def add_file(self,file:Dirent|Dir,up_dir:Dir):
         up_dir.add_dirent(file)
-
-    def find_file(self,file_name:str|None=None,inode_index:int|None=None,file:Dirent|Dir|None=None,first:bool=True,start_dir:Dir| None=None) -> Dir|None|list:
-        # 在文件树中查找文件
-        # 可通过文件名 inode号 或Dir/Dirent 对象查找
-        # start_dir 开始查找的目录对象
-        # first 只返回查找到的第一个
-        return_list=[] 
-        dir_list=[]
-        if start_dir == None:
-            start_dir=self.Root_Dir
         
-        if file_name == '/' or inode_index == 0 or file == self.Root_Dir:
-            if first:
-                return self.Root_Dir
-            else :
-                return [self.Root_Dir]
-
-        dirent_list = start_dir.dirent
+    def find_in_dir(self,this_dir:Dir,
+                    file_name:str|None=None,
+                    dirent:Dirent|None=None) -> list:
+        # 在一个目录中查找文件
+        # 可通过文件名和 /Dirent 对象查找
+        # this_dir 查询的目录 
+        dir_list=[]
+        
+        dirent_list = this_dir.dirents
 
         for i in dirent_list:
-            if (file_name != None and i.name == file_name) or \
-                (inode_index != None and i.inode_index == inode_index):
+            if (file_name is not None and i.name == file_name) or dirent == i: 
+                dir_list.append([this_dir,i])        
 
-                if i.name == file_name or i.inode_index == inode_index or file in dirent_list:
-                    if first:
-                        return start_dir
-                    else :
-                        return_list.append(start_dir)
+        return dir_list 
+    
 
-            if isinstance(i, Dir): 
-                dir_list.append(i)
+    def find_in_tree(self,file_name:str|None=None,
+                     dirent:Dirent|None=None,
+                     first:bool=True,
+                     start_dir=None) -> list:
+        # 在文件树中查找文件
+        # 可通过文件名 或Dirent 对象查找
+        # start_dir 开始查找的目录对象
+        # first 只返回查找到的第一个
+        if start_dir is None:
+            start_dir=self.Root_Dir
+        current_level=[start_dir]
+        result = [] 
+        dir_list=[]
+        while current_level :
+            for i in current_level:
+                rv=self.find_in_dir(i,file_name,dirent)
+                if rv !=[]:
+                   dir_list+=rv
+                   if first:
+                       return dir_list[0]
 
-        if dir_list != []:
-            for i in dir_list:
-                rv=self.find_file(file_name,inode_index,file,first,start_dir=i)
-                if not first and rv != None:
+                for n in i.dirents:
+                    if isinstance(n,Dir):
+                        result.append(n)
+            current_level = result.copy()
+            result = []
 
-                    return_list=return_list+rv
-                elif rv != None:
-                    return rv
-        if first:
+        if dir_list == []:
             return None
         else:
-            return return_list
+            return dir_list 
 
             
 class HBinode_Filesysteam():
+
     """基于 inode 的文件系统主类"""
     def __init__(self, blk_size, cluster_size):
         """
@@ -212,7 +222,10 @@ class HBinode_Filesysteam():
         self.cluster_size = cluster_size
         self.blk_size = blk_size
         self.blk_bitmap = BitMap(self.blk_size/self.cluster_size)   # 块位图管理
+        #创建文件树
         dir_tree=Dir_Tree()
+        
+
 
     def creat_dir(self, up_dir, ):
         """
