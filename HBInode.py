@@ -3,6 +3,11 @@ from ctypes import c_ubyte, c_uint16, c_uint32
 
 class BitMap():
     """位图类，用于管理空闲块/簇的状态"""
+    # write_bitmap(bit_index_list:list)->None 将指定位列表设置为已占用
+    # erasure_bitmap(bit_index_list)->None 将指定位列表设置为空闲
+    # get_free_bit(size)->list 获取指定数量的空闲位索引(非连续)
+    # get_consiguous_free_bit(size)-> list 获取连续的空闲位索引
+    # stat()->bit_num, work_cluster, free_cluster 统计位图中空闲与已占用的数量
     def __init__(self, bit_num):
 
         """
@@ -27,6 +32,14 @@ class BitMap():
         """
         for i in bit_index_list:
             self.bitmap[i] = 0
+    def get_one_free_bit(self):
+        
+        for n in range(self.bit_num):
+            if self.bitmap[n] == 0:
+                self.bitmap[n]=1
+                return n
+        
+        return None
 
     def get_free_bit(self, size):
         """
@@ -34,34 +47,47 @@ class BitMap():
         :param size: 需要获取的空闲位数
         :return: 空闲位索引列表
         """
+        all_free=[]
         free_bit_list = []
-        for i in range(size):
-            for n in range(self.bit_num):
-                if self.bitmap[n] == 0:
-                    free_bit_list.append(n)
-                    break   # 找到一个空闲位后跳出内层循环，继续寻找下一个
-        return free_bit_list
+        for n in range(self.bit_num):
+            if self.bitmap[n] == 0:
+                all_free.append(n)
+        if len(all_free )>= size:
+            free_bit_list=all_free[:size]
+            self.write_bitmap(free_bit_list)
+
+            return free_bit_list
+        else:
+            return None
 
     def get_consiguous_free_bit(self, size):
         """
-        获取指定数量的连续空闲位索引（未完成实现）
+        获取指定数量的连续空闲位索引
         :param size: 连续空闲位的数量
-        :return: 连续空闲位的起始索引列表（当前代码有误，实际应返回连续区间）
+        :return: 连续空闲位的起始索引列表
         """
+        all_free=[]
         free_bit_list = []
-        jmp_index = 0
-        for i in range(self.bit_num):
-            if jmp_index == 0:
-                # 检查从 i 开始的连续 size 个位是否都为空闲
-                for n in range(size):
-                    if self.bitmap[i + n] == 1:
-                        jmp_index = n   # 记录第一个被占用的偏移量
-                if jmp_index == 0:
-                    # 如果全空闲，填充返回列表
-                    for x in range(size):
-                        free_bit_list[x] = i + x
-                return free_bit_list
-            jmp_index -= 1
+        for n in range(self.bit_num):
+            if self.bitmap[n] == 0:
+                all_free.append(n)
+        count=0
+        last=None
+        for n in all_free:
+            if last is not None and n != last+1:
+                free_bit_list=[]
+                last = n
+                count =0
+                
+            if count < size:
+                free_bit_list.append(n)
+                last = n        
+                count+=1   
+            else: break
+
+        if len(free_bit_list) == size:       
+            self.write_bitmap(free_bit_list)
+            return free_bit_list
 
     def stat(self):
         """
@@ -87,7 +113,7 @@ class InNode():
         self.update_at = c_uint16(0)          # 最后更新时间戳
         self.retain_field_0 = c_uint16(0)     # 保留字段0
         self.retain_field_1 = c_uint16(0)     # 保留字段1
-        self.pointerlist = [c_uint16(0xFFFF)] * 10   # 数据块指针数组，0xFFFF 表示空指针
+        self.pointerlist = [c_uint16(0xFFFF) for _ in range(10)]   # 数据块指针数组，0xFFFF 表示空指针
 
 
 class Dirent():
@@ -96,7 +122,6 @@ class Dirent():
         """
         :param file_name: 文件或目录名
         :param inode_index: 对应的 inode 索引号
-        :param up_dir: 上级目录对象引用
         """
         self.namesize=len(name.encode('gb2312'))
         if self.namesize  <=30:
@@ -109,9 +134,6 @@ class Dirent():
 
         self.inode_index =c_uint16(inode_index)
 
-        
-             
-            
 
 class Dir(Dirent):
     "目录类 这里用列表表示"
@@ -128,7 +150,7 @@ class Dir(Dirent):
         self.dirents:list[Dirent|Dir]=[self.dot,self.dotdot]
 
         for i in args:
-            if i in self.name_list():
+            if i.name not in self.name_list():
                 self.dirents.append(i)
             else:
                 print(f"目录 {self.name } 中已存在名为 {i.name} 的目录项")
@@ -140,7 +162,7 @@ class Dir(Dirent):
         return namelist
     def add_dirent(self,*args:Dirent | Dir):
         for i in args:
-            if i in self.name_list():
+            if i.name not in self.name_list():
                 self.dirents.append(i)
             else:
                 print(f"目录 {self.name } 中已存在名为 {i.name} 的目录项,已跳过")
@@ -155,7 +177,7 @@ class Dir(Dirent):
 class Dir_Tree():
     """目录树管理类"""
     def __init__(self):
-        root_dir=Dir('/',0,None)
+        self.root_dir=Dir('/',0,None)
 
 
     def add_file(self,file:Dirent|Dir,up_dir:Dir):
@@ -187,7 +209,7 @@ class Dir_Tree():
         # start_dir 开始查找的目录对象
         # first 只返回查找到的第一个
         if start_dir is None:
-            start_dir=self.Root_Dir
+            start_dir=self.root_dir
         current_level=[start_dir]
         result = [] 
         dir_list=[]
@@ -221,14 +243,21 @@ class HBinode_Filesysteam():
         """
         self.cluster_size = cluster_size
         self.blk_size = blk_size
-        self.blk_bitmap = BitMap(self.blk_size/self.cluster_size)   # 块位图管理
+        self.blk_bitmap = BitMap(self.blk_size//self.cluster_size)   # 块位图管理
+        self.inode_bitmap= BitMap(64)
+        self.inodes=[]
         #创建文件树
-        dir_tree=Dir_Tree()
+        self.dir_tree=Dir_Tree()
         
 
 
-    def creat_dir(self, up_dir, ):
+    def creat_dir(self, up_dir:Dir,dir_name:str,*dirent:Dirent):
         """
         创建目录的方法（占位，待实现）
         :param up_dir: 上级目录
         """
+        inode_index=self.inode_bitmap.get_one_free_bit()
+        new_dir=Dir(dir_name, inode_index,up_dir)
+        self.dir_tree.add_file(new_dir,up_dir)
+        
+        
